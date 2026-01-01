@@ -57,8 +57,8 @@ Ikuti langkah-langkah berikut untuk menjalankan aplikasi di lokal (Localhost):
 
 1. **Clone Repository (Jika ada git)**
    ```bash
-   git clone https://github.com/vrdeyy/inventaris-app.git
-   cd inventaris-app
+   git clone https://github.com/Vrdeyy/Inventaris_App.git
+   cd inventaris
    ```
    *Atau jika deploy manual, pastikan berada di root folder project.*
 
