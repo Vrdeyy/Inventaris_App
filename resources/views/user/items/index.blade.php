@@ -3,18 +3,23 @@
 @section('content')
     <div class="flex flex-col sm:flex-row justify-between items-center mb-6">
         <h1 class="text-2xl font-bold text-gray-800">
-            Data Barang 
             @if(request()->routeIs('admin.monitoring.user'))
-               <span class="text-gray-500 text-lg font-normal"> / {{ $items->first()->user->name ?? 'User' }}</span>
+                Monitoring Barang <span class="text-indigo-600">/
+                    {{ $user->name ?? ($items->first()->user->name ?? 'User') }}</span>
+            @else
+                Data Barang
             @endif
         </h1>
-        
+
         @if(auth()->user()->role === 'admin' && request()->routeIs('admin.monitoring.user') && $items->isNotEmpty())
-             <form action="{{ route('admin.users.export_items', $items->first()->user_id) }}" method="GET" class="flex flex-wrap items-center gap-2 mt-4 sm:mt-0">
+            <form action="{{ route('admin.users.export_items', $items->first()->user_id) }}" method="GET"
+                class="flex flex-wrap items-center gap-2 mt-4 sm:mt-0">
                 <select name="month" class="rounded-lg border-gray-300 text-sm focus:ring-indigo-500 focus:border-indigo-500">
                     <option value="">Semua Bulan</option>
                     @foreach(range(1, 12) as $m)
-                        <option value="{{ $m }}">{{ date('F', mktime(0, 0, 0, $m, 1)) }}</option>
+                        <option value="{{ $m }}">
+                            {{ ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'][$m] }}
+                        </option>
                     @endforeach
                 </select>
                 <select name="year" class="rounded-lg border-gray-300 text-sm focus:ring-indigo-500 focus:border-indigo-500">
@@ -23,22 +28,20 @@
                         <option value="{{ $y }}">{{ $y }}</option>
                     @endforeach
                 </select>
-                <button type="submit" name="action" value="export" class="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm transition">
-                    📤 Export
+                <button type="submit" name="action" value="export"
+                    class="px-3 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 text-sm transition">
+                    📊 Export Excel
                 </button>
-                <button type="submit" name="action" value="delete" onclick="return confirm('⚠️ PERINGATAN: Aksi ini akan MENGHAPUS semua data barang pada periode yang dipilih. Data tidak dapat dikembalikan dengan mudah. Lanjutkan?')" class="px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm transition">
-                    🗑️ Hapus
-                </button>
-                 <a href="{{ route('admin.monitoring') }}"
+                <a href="{{ route('admin.monitoring') }}"
                     class="px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 text-sm transition">
                     ← Kembali
                 </a>
-             </form>
+            </form>
         @elseif(auth()->user()->role === 'user')
-            <div class="flex space-x-2 mt-4 sm:mt-0">
+            <div class="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2 mt-4 sm:mt-0">
                 <a href="{{ route('user.items.export') }}"
-                    class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition shadow-sm">
-                    📤 Export Excel
+                    class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition shadow-sm text-sm">
+                    📊 Export Excel ({{ now()->translatedFormat('F Y') }})
                 </a>
                 <a href="{{ route('user.items.create') }}"
                     class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition shadow-sm">
@@ -47,6 +50,15 @@
             </div>
         @endif
     </div>
+
+    @if(auth()->user()->role === 'user')
+        <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4 flex items-center space-x-2 text-sm text-amber-800">
+            <span>ℹ️</span>
+            <p>Export Excel hanya untuk <strong>bulan berjalan</strong> (Tgl 1 - {{ now()->endOfMonth()->day }}
+                {{ now()->translatedFormat('F Y') }})</p>
+        </div>
+    @endif
+
 
     <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6">
         <form action="" method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -122,6 +134,9 @@
                                     @method('DELETE')
                                     <button type="submit" class="text-red-600 hover:text-red-900">Hapus</button>
                                 </form>
+                            @elseif(auth()->user()->role === 'admin')
+                                <a href="{{ route('admin.items.show', $item->id) }}"
+                                    class="text-indigo-600 hover:text-indigo-900">Detail →</a>
                             @endif
                         </td>
                     </tr>

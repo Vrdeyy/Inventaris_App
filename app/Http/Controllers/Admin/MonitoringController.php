@@ -27,18 +27,52 @@ class MonitoringController extends Controller
         return view('admin.monitoring.index', compact('users'));
     }
 
-    public function showUser(User $user)
+    public function showUser(Request $request, User $user)
     {
-        // Re-use user items view or a specific admin view
-        // Let's perform the query here to pass items to the view
-        $items = $user->items()->latest()->paginate(10);
+        // 1. Fetch Items with filtering
+        $itemsQuery = $user->items();
+        if ($search = $request->input('search')) {
+            $itemsQuery->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('code', 'like', "%{$search}%");
+            });
+        }
+        if ($category = $request->input('category')) {
+            $itemsQuery->where('category', $category);
+        }
+        if ($condition = $request->input('condition')) {
+            $itemsQuery->where('condition', $condition);
+        }
+        $items = $itemsQuery->latest()->paginate(10, ['*'], 'items_page');
 
-        // We can reuse user.items.index or create admin.monitoring.show
-        // reusing user.items.index might need tweaks to hide "Delete/Edit" if we want read-only
-        // But Controller already handles logic. View checks role.
+        // 2. Fetch User Logs
+        $logs = \App\Models\ItemLog::with('item')
+            ->where('user_id', $user->id)
+            ->latest()
+            ->paginate(15, ['*'], 'logs_page');
 
-        return view('user.items.index', compact('items'));
-        // Note: The view user.items.index checks Auth role to show/hide Update/Delete buttons.
-        // So this is safe and efficient reuse.
+        return view('admin.monitoring.show', compact('items', 'logs', 'user'));
+    }
+
+    public function printUserItems(Request $request, User $user)
+    {
+        $query = $user->items();
+
+        if ($search = $request->input('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('code', 'like', "%{$search}%");
+            });
+        }
+        if ($category = $request->input('category')) {
+            $query->where('category', $category);
+        }
+        if ($condition = $request->input('condition')) {
+            $query->where('condition', $condition);
+        }
+
+        $items = $query->latest()->get();
+
+        return view('admin.reports.items_print', compact('items', 'user'));
     }
 }

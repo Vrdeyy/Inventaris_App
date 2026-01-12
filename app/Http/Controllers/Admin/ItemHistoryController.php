@@ -1,270 +1,158 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Controller;
 use App\Models\Item;
 use App\Models\ItemLog;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
-use PhpOffice\PhpSpreadsheet\Style\Font;
-use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
 
-class ItemController extends Controller
+class ItemHistoryController extends Controller
 {
-    public function index(Request $request)
+    /**
+     * Display item details with history
+     */
+    public function show(Item $item)
     {
-        $query = Item::query();
+        $item->load([
+            'user',
+            'logs' => function ($query) {
+                $query->with('user')->latest('created_at');
+            }
+        ]);
 
-        // User biasa hanya bisa melihat barang milik mereka sendiri
-        // Admin bisa melihat semua barang
-        if (Auth::user()->role !== 'admin') {
-            $query->where('user_id', Auth::id());
-        }
+        return view('admin.items.show', compact('item'));
+    }
+
+    /**
+     * Display list of users to see their specific history (Grouped by User)
+     */
+    public function history(Request $request)
+    {
+        $query = User::where('role', 'user');
 
         if ($search = $request->input('search')) {
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('code', 'like', "%{$search}%");
-            });
+            $query->where('name', 'like', "%{$search}%");
         }
 
-        if ($category = $request->input('category')) {
-            $query->where('category', $category);
-        }
+        $users = $query->withCount([
+            'logs as total_activities',
+            'logs as month_activities' => function ($query) {
+                $query->whereMonth('created_at', now()->month);
+            }
+        ])->get();
 
-        if ($location = $request->input('location')) {
-            $query->where('location', $location);
-        }
-
-        // Admin bisa filter berdasarkan user_id
-        if (Auth::user()->role === 'admin' && $user_id = $request->input('user_id')) {
-            $query->where('user_id', $user_id);
-        }
-
-        if ($condition = $request->input('condition')) {
-            $query->where('condition', $condition);
-        }
-
-        $items = $query->latest()->paginate(10);
-
-        return view('user.items.index', compact('items'));
-    }
-
-    public function create()
-    {
-        return view('user.items.create');
-    }
-
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'code' => 'required|unique:items',
-            'name' => 'required',
-            'category' => 'required',
-            'location' => 'required',
-            'quantity' => 'required|integer|min:0',
-            'condition' => 'required|in:baik,rusak,hilang',
-            'date_input' => 'required|date',
-        ]);
-
-        $item = Item::create([
-            'code' => $validated['code'],
-            'name' => $validated['name'],
-            'category' => $validated['category'],
-            'location' => $validated['location'],
-            'quantity' => $validated['quantity'],
-            'condition' => $validated['condition'],
-            'user_id' => Auth::id(),
-            'created_at' => $validated['date_input'],
-        ]);
-
-        ItemLog::create([
-            'item_id' => $item->id,
-            'user_id' => Auth::id(),
-            'action' => 'create',
-            'new_condition' => $validated['condition'],
-            'new_quantity' => $validated['quantity'],
-            'description' => 'Input baru',
-        ]);
-
-        return redirect()->route('user.items.index')->with('success', 'Barang berhasil ditambahkan.');
-    }
-
-    public function edit(Item $item)
-    {
-        // User biasa hanya bisa mengedit barang milik mereka sendiri
-        if (Auth::user()->role !== 'admin' && $item->user_id !== Auth::id()) {
-            abort(403, 'Anda tidak memiliki akses untuk mengedit barang ini.');
-        }
-
-        return view('user.items.edit', compact('item'));
-    }
-
-    public function update(Request $request, Item $item)
-    {
-        // User biasa hanya bisa mengupdate barang milik mereka sendiri
-        if (Auth::user()->role !== 'admin' && $item->user_id !== Auth::id()) {
-            abort(403, 'Anda tidak memiliki akses untuk mengupdate barang ini.');
-        }
-
-        $validated = $request->validate([
-            'name' => 'required',
-            'location' => 'required',
-            'quantity' => 'required|integer|min:0',
-            'condition' => 'required|in:baik,rusak,hilang',
-            'description' => 'required|string', // Note for history
-        ]);
-
-        $old_condition = $item->condition;
-        $old_quantity = $item->quantity;
-
-        $item->update([
-            'name' => $validated['name'],
-            'location' => $validated['location'],
-            'quantity' => $validated['quantity'],
-            'condition' => $validated['condition'],
-        ]);
-
-        ItemLog::create([
-            'item_id' => $item->id,
-            'user_id' => Auth::id(),
-            'action' => 'update',
-            'old_condition' => $old_condition,
-            'new_condition' => $validated['condition'],
-            'old_quantity' => $old_quantity,
-            'new_quantity' => $validated['quantity'],
-            'description' => $validated['description'],
-        ]);
-
-        return redirect()->route('user.items.index')->with('success', 'Barang berhasil diupdate.');
-    }
-
-    public function destroy(Item $item)
-    {
-        // User biasa hanya bisa menghapus barang milik mereka sendiri
-        if (Auth::user()->role !== 'admin' && $item->user_id !== Auth::id()) {
-            abort(403, 'Anda tidak memiliki akses untuk menghapus barang ini.');
-        }
-
-        $item->delete();
-
-        ItemLog::create([
-            'item_id' => $item->id,
-            'user_id' => Auth::id(),
-            'action' => 'delete',
-            'description' => 'Barang dihapus (Soft Delete)',
-        ]);
-
-        return redirect()->route('user.items.index')->with('success', 'Barang berhasil dihapus.');
+        return view('admin.items.history_index', compact('users'));
     }
 
     /**
-     * Export Items for User (current month only, 1st to end of month)
+     * Display history for a specific user
      */
-    public function export()
+    public function userHistory(User $user, Request $request)
     {
-        $user = Auth::user();
+        $query = ItemLog::with(['item', 'user'])->where('user_id', $user->id);
 
-        // User cetak semua data barang yang mereka miliki hingga saat ini
-        $endOfMonth = Carbon::now()->endOfMonth();
+        if ($date = $request->input('date')) {
+            $query->whereDate('created_at', $date);
+        }
+        if ($month = $request->input('month')) {
+            $query->whereMonth('created_at', $month);
+        }
+        if ($year = $request->input('year')) {
+            $query->whereYear('created_at', $year);
+        }
 
-        $items = Item::where('user_id', $user->id)
-            ->where('created_at', '<=', $endOfMonth)
-            ->get();
+        $logs = $query->latest('created_at')->paginate(20);
 
-        $monthName = $this->getIndonesianMonth(Carbon::now()->month);
-        $year = Carbon::now()->year;
-        $filename = "daftar-barang-{$monthName}-{$year}.xlsx";
-
-        return $this->generateExcelFromTemplate($items, $filename, 'items', $monthName, $year);
+        return view('admin.items.user_history', compact('logs', 'user'));
     }
 
     /**
-     * Export Items for Admin (supports day, month, year filtering)
+     * Export history to Excel (Admin only - supports day, month, year filtering)
      * When spanning multiple months, each month gets its own sheet
      */
-    public function exportItems(Request $request)
+    public function exportHistory(Request $request)
     {
-        $query = Item::with('user');
+        $query = ItemLog::with(['item', 'user']);
+
         if ($userId = $request->input('user_id')) {
             if ($userId !== 'all') {
                 $query->where('user_id', $userId);
             }
         }
+        $selectedYear = $request->input('year') ?: Carbon::now()->year;
         $startMonth = $request->input('start_month');
         $endMonth = $request->input('end_month');
-        $selectedYear = $request->input('year') ?: Carbon::now()->year;
         $isRange = ($startMonth && $endMonth && $startMonth != $endMonth);
 
-        // Tentukan batas akhir tanggal untuk filter
-        $endDate = Carbon::now()->endOfMonth();
-
         if ($date = $request->input('date')) {
-            $endDate = Carbon::parse($date)->endOfDay();
-        } elseif ($endMonth) {
+            $query->whereDate('created_at', $date);
+        } elseif ($isRange) {
+            $startDate = Carbon::create($selectedYear, $startMonth, 1)->startOfDay();
             $endDate = Carbon::create($selectedYear, $endMonth, 1)->endOfMonth()->endOfDay();
-        } elseif ($month = $request->input('month') ?: $startMonth) {
-            $endDate = Carbon::create($selectedYear, $month, 1)->endOfMonth()->endOfDay();
-        }
-
-        // Ambil SEMUA BARANG yang dibuat "sebelum atau tepat pada" tanggal batas akhir
-        // Ini memastikan barang lama tetap muncul (akumulatif/inventory snapshot)
-        $query->where('created_at', '<=', $endDate);
-
-        if ($condition = $request->input('condition')) {
-            $query->where('condition', $condition);
-        }
-        if ($category = $request->input('category')) {
-            $query->where('category', $category);
-        }
-
-        $items = $query->get();
-
-        // Determine if we need multiple sheets (more than 1 month range)
-        $startMonth = $request->input('start_month');
-        $endMonth = $request->input('end_month');
-        $selectedYear = $request->input('year') ?: Carbon::now()->year;
-
-        // Username info for filename
-        $userInfo = 'Semua-Petugas';
-        if ($uid = $request->input('user_id')) {
-            if ($u = User::find($uid)) {
-                $userInfo = preg_replace('/[^A-Za-z0-9\-]/', '', str_replace(' ', '-', $u->name));
+            $query->whereBetween('created_at', [$startDate, $endDate]);
+        } else {
+            if ($month = $request->input('month') ?: $startMonth) {
+                $query->whereMonth('created_at', $month);
+            }
+            if ($year = $request->input('year') ?: $selectedYear) {
+                $query->whereYear('created_at', $year);
             }
         }
 
+        // Filter by action only if it's a valid log action (not 'export' or 'print')
+        if ($actionFilter = $request->input('log_action')) {
+            $query->where('action', $actionFilter);
+        }
+
+        $logs = $query->latest('created_at')->get();
+
+        // Filename Info
+        $userInfo = 'Semua-Petugas';
+        if ($uid = $request->input('user_id')) {
+            if ($uid !== 'all') {
+                if ($u = User::find($uid)) {
+                    $userInfo = preg_replace('/[^A-Za-z0-9\-]/', '', str_replace(' ', '-', $u->name));
+                }
+            }
+        }
+
+        $selectedYear = $request->input('year') ?: Carbon::now()->year;
+        $startMonth = $request->input('start_month');
+        $endMonth = $request->input('end_month');
+
         // Check if multi-month export is needed
         if ($startMonth && $endMonth && $startMonth != $endMonth) {
-            return $this->exportMultiMonthItems($items, $startMonth, $endMonth, $selectedYear, $userInfo);
+            return $this->exportMultiMonthHistory($logs, $startMonth, $endMonth, $selectedYear, $userInfo);
         }
 
         // Single month/period export
         $month = $request->input('month') ?: $startMonth;
         $year = $request->input('year') ?: $selectedYear;
         $periodInfo = ($month ? $this->getIndonesianMonth($month) : 'Semua') . '-' . ($year ?: 'Semua');
-        $filename = "daftar-barang-{$userInfo}-{$periodInfo}.xlsx";
+        $filename = "riwayat-aktivitas-{$userInfo}-{$periodInfo}.xlsx";
 
-        return $this->generateExcelFromTemplate($items, $filename, 'items', $month ? $this->getIndonesianMonth($month) : null, $year);
+        return $this->generateHistoryExcel($logs, $filename, $month ? $this->getIndonesianMonth($month) : null, $year);
     }
 
     /**
-     * Export items spanning multiple months - each month gets its own sheet
+     * Export history spanning multiple months - each month gets its own sheet
      */
-    private function exportMultiMonthItems($allItems, $startMonth, $endMonth, $year, $userInfo)
+    private function exportMultiMonthHistory($allLogs, $startMonth, $endMonth, $year, $userInfo)
     {
-        $templatePath = storage_path('app/templates/template_items.xlsx');
-        $hasTemplate = Storage::exists('templates/template_items.xlsx');
+        $templatePath = storage_path('app/templates/template_history.xlsx');
+        $hasTemplate = Storage::exists('templates/template_history.xlsx');
         if ($hasTemplate) {
-            $templatePath = Storage::path('templates/template_items.xlsx');
+            $templatePath = Storage::path('templates/template_history.xlsx');
         }
 
         $spreadsheet = new Spreadsheet();
@@ -279,10 +167,9 @@ class ItemController extends Controller
         for ($m = $startMonth; $m <= $endMonth; $m++) {
             $monthName = $this->getIndonesianMonth($m);
 
-            // Akumulatif: Ambil barang yang dibuat sebelum atau pada akhir bulan ini
-            $monthEnd = Carbon::create($year, $m, 1)->endOfMonth()->endOfDay();
-            $monthItems = $allItems->filter(function ($item) use ($monthEnd) {
-                return $item->created_at <= $monthEnd;
+            // Filter logs for this specific month
+            $monthLogs = $allLogs->filter(function ($log) use ($m, $year) {
+                return $log->created_at->month == $m && $log->created_at->year == $year;
             });
 
             // Create new sheet
@@ -293,35 +180,35 @@ class ItemController extends Controller
             if ($templateSpreadsheet) {
                 $this->copyTemplateToSheet($templateSpreadsheet->getActiveSheet(), $sheet);
             } else {
-                $this->createDefaultItemsHeader($sheet, $monthName, $year);
+                $this->createDefaultHistoryHeader($sheet, $monthName, $year);
             }
 
             // Fill data starting from row 6
-            $this->fillItemsData($sheet, $monthItems, 6);
+            $this->fillHistoryData($sheet, $monthLogs, 6);
 
             // Apply styling to data rows
-            $lastRow = 5 + $monthItems->count();
-            if ($monthItems->count() > 0) {
+            $lastRow = 5 + $monthLogs->count();
+            if ($monthLogs->count() > 0) {
                 $this->applyDataStyles($sheet, 6, $lastRow, 'A', 'G');
             }
         }
 
         $spreadsheet->setActiveSheetIndex(0);
-        $filename = "daftar-barang-{$userInfo}-{$this->getIndonesianMonth($startMonth)}-{$this->getIndonesianMonth($endMonth)}-{$year}.xlsx";
+        $filename = "riwayat-aktivitas-{$userInfo}-{$this->getIndonesianMonth($startMonth)}-{$this->getIndonesianMonth($endMonth)}-{$year}.xlsx";
 
         return $this->outputExcel($spreadsheet, $filename);
     }
 
     /**
-     * Generate Excel file from template
+     * Generate History Excel from template
      */
-    private function generateExcelFromTemplate($items, $filename, $type = 'items', $month = null, $year = null)
+    private function generateHistoryExcel($logs, $filename, $month = null, $year = null)
     {
-        $templatePath = storage_path("app/templates/template_{$type}.xlsx");
-        $hasTemplate = Storage::exists("templates/template_{$type}.xlsx");
+        $templatePath = storage_path('app/templates/template_history.xlsx');
+        $hasTemplate = Storage::exists('templates/template_history.xlsx');
 
         if ($hasTemplate) {
-            $templatePath = Storage::path("templates/template_{$type}.xlsx");
+            $templatePath = Storage::path('templates/template_history.xlsx');
         }
 
         if ($hasTemplate && file_exists($templatePath) && class_exists(IOFactory::class)) {
@@ -338,11 +225,11 @@ class ItemController extends Controller
             $this->cleanHeaderArea($sheet);
 
             // Fill data starting from row 6
-            $this->fillItemsData($sheet, $items, 6);
+            $this->fillHistoryData($sheet, $logs, 6);
 
             // Apply styling to data rows
-            $lastRow = 5 + $items->count();
-            if ($items->count() > 0) {
+            $lastRow = 5 + $logs->count();
+            if ($logs->count() > 0) {
                 $this->applyDataStylesFromTemplate($sheet, 6, $lastRow, 'A', 'G');
             }
 
@@ -358,14 +245,14 @@ class ItemController extends Controller
         }
 
         // Create styled header
-        $this->createDefaultItemsHeader($sheet, $month, $year);
+        $this->createDefaultHistoryHeader($sheet, $month, $year);
 
         // Fill data
-        $this->fillItemsData($sheet, $items, 6);
+        $this->fillHistoryData($sheet, $logs, 6);
 
         // Apply styling to data rows
-        $lastRow = 5 + $items->count();
-        if ($items->count() > 0) {
+        $lastRow = 5 + $logs->count();
+        if ($logs->count() > 0) {
             $this->applyDataStyles($sheet, 6, $lastRow, 'A', 'G');
         }
 
@@ -373,13 +260,13 @@ class ItemController extends Controller
     }
 
     /**
-     * Create default header with styling for items
+     * Create default header with styling for history
      */
-    private function createDefaultItemsHeader($sheet, $month = null, $year = null)
+    private function createDefaultHistoryHeader($sheet, $month = null, $year = null)
     {
         // Title
         $sheet->mergeCells('A1:G1');
-        $sheet->setCellValue('A1', 'DAFTAR INVENTARIS BARANG');
+        $sheet->setCellValue('A1', 'RIWAYAT AKTIVITAS INVENTARIS');
         $sheet->getStyle('A1')->applyFromArray([
             'font' => [
                 'bold' => true,
@@ -423,7 +310,7 @@ class ItemController extends Controller
         $sheet->getRowDimension(4)->setRowHeight(10);
 
         // Header row (row 5)
-        $headers = ['No', 'Nama Barang', 'Kategori', 'Lokasi', 'Kondisi', 'Jumlah', 'Tanggal'];
+        $headers = ['No', 'Tanggal', 'Petugas', 'Barang', 'Aksi', 'Perubahan', 'Catatan'];
         $columns = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
 
         foreach ($headers as $index => $header) {
@@ -455,29 +342,38 @@ class ItemController extends Controller
 
         // Set column widths
         $sheet->getColumnDimension('A')->setWidth(5);
-        $sheet->getColumnDimension('B')->setWidth(30);
-        $sheet->getColumnDimension('C')->setWidth(18);
-        $sheet->getColumnDimension('D')->setWidth(20);
-        $sheet->getColumnDimension('E')->setWidth(12);
-        $sheet->getColumnDimension('F')->setWidth(10);
-        $sheet->getColumnDimension('G')->setWidth(12);
+        $sheet->getColumnDimension('B')->setWidth(18);
+        $sheet->getColumnDimension('C')->setWidth(20);
+        $sheet->getColumnDimension('D')->setWidth(25);
+        $sheet->getColumnDimension('E')->setWidth(10);
+        $sheet->getColumnDimension('F')->setWidth(35);
+        $sheet->getColumnDimension('G')->setWidth(25);
     }
 
     /**
-     * Fill items data to sheet
+     * Fill history data to sheet
      */
-    private function fillItemsData($sheet, $items, $startRow)
+    private function fillHistoryData($sheet, $logs, $startRow)
     {
         $row = $startRow;
         $no = 1;
-        foreach ($items as $item) {
+        foreach ($logs as $log) {
             $sheet->setCellValue('A' . $row, $no++);
-            $sheet->setCellValue('B' . $row, $item->name);
-            $sheet->setCellValue('C' . $row, $item->category);
-            $sheet->setCellValue('D' . $row, $item->location);
-            $sheet->setCellValue('E' . $row, ucfirst($item->condition));
-            $sheet->setCellValue('F' . $row, $item->quantity);
-            $sheet->setCellValue('G' . $row, $item->created_at->format('d/m/Y'));
+            $sheet->setCellValue('B' . $row, $log->created_at->format('d/m/Y H:i'));
+            $sheet->setCellValue('C' . $row, $log->user->name ?? '-');
+            $sheet->setCellValue('D' . $row, ($log->item->code ?? '-') . ' - ' . ($log->item->name ?? '-'));
+            $sheet->setCellValue('E' . $row, ucfirst($log->action));
+
+            // Format Perubahan
+            $perubahan = "-";
+            if ($log->action === 'update') {
+                $perubahan = "Kondisi: {$log->old_condition} -> {$log->new_condition}, Jumlah: {$log->old_quantity} -> {$log->new_quantity}";
+            } elseif ($log->action === 'create') {
+                $perubahan = "Baru: {$log->new_condition} ({$log->new_quantity})";
+            }
+
+            $sheet->setCellValue('F' . $row, $perubahan);
+            $sheet->setCellValue('G' . $row, $log->description);
             $row++;
         }
     }
@@ -504,13 +400,8 @@ class ItemController extends Controller
 
         // Center align specific columns
         $sheet->getStyle("A{$startRow}:A{$endRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle("B{$startRow}:B{$endRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
         $sheet->getStyle("E{$startRow}:E{$endRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-        $sheet->getStyle("F{$startRow}:F{$endRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-        $sheet->getStyle("G{$startRow}:G{$endRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-
-        // Force Number Formatting
-        $sheet->getStyle("F{$startRow}:F{$endRow}")->getNumberFormat()->setFormatCode('#,##0');
-        $sheet->getStyle("G{$startRow}:G{$endRow}")->getNumberFormat()->setFormatCode('dd/mm/yyyy');
 
         // Alternating row colors
         for ($row = $startRow; $row <= $endRow; $row++) {
@@ -530,9 +421,6 @@ class ItemController extends Controller
      */
     private function applyDataStylesFromTemplate($sheet, $startRow, $endRow, $startCol, $endCol)
     {
-        // Get style from first data row in template
-        $templateRowStyle = $sheet->getStyle("{$startCol}{$startRow}:{$endCol}{$startRow}");
-
         // Apply borders at minimum
         $range = "{$startCol}{$startRow}:{$endCol}{$endRow}";
         $sheet->getStyle($range)->applyFromArray([
@@ -546,13 +434,8 @@ class ItemController extends Controller
 
         // Center align specific columns
         $sheet->getStyle("A{$startRow}:A{$endRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle("B{$startRow}:B{$endRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
         $sheet->getStyle("E{$startRow}:E{$endRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-        $sheet->getStyle("F{$startRow}:F{$endRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-        $sheet->getStyle("G{$startRow}:G{$endRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-
-        // Force Number Formatting (Template fix)
-        $sheet->getStyle("F{$startRow}:F{$endRow}")->getNumberFormat()->setFormatCode('#,##0');
-        $sheet->getStyle("G{$startRow}:G{$endRow}")->getNumberFormat()->setFormatCode('dd/mm/yyyy');
     }
 
     /**
@@ -656,12 +539,5 @@ class ItemController extends Controller
             12 => 'Desember'
         ];
         return $months[(int) $monthNumber] ?? 'Unknown';
-    }
-
-    public function exportUserItems(Request $request, User $user)
-    {
-        // Wrapper for backward compatibility or simple redirection to main export
-        $request->merge(['user_id' => $user->id]);
-        return $this->exportItems($request);
     }
 }

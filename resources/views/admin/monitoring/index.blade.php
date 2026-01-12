@@ -39,10 +39,22 @@
                         </div>
                     </div>
 
-                    <div class="flex justify-between items-center text-sm border-t border-gray-100 pt-4">
-                        <span class="text-gray-500">Total: <strong>{{ $user->total_items }}</strong> Barang</span>
-                        <a href="{{ route('admin.monitoring.user', $user->id) }}"
-                            class="text-indigo-600 hover:text-indigo-800 font-medium">Lihat Detail →</a>
+                    <div class="flex flex-col space-y-2 mt-4 border-t border-gray-100 pt-4">
+                        <div class="flex justify-between items-center text-sm mb-1">
+                            <span class="text-gray-500">Monitoring:</span>
+                            <a href="{{ route('admin.monitoring.user', $user->id) }}"
+                                class="text-indigo-600 font-bold hover:underline">Lihat Detail →</a>
+                        </div>
+                        <div class="mt-2 pt-2 border-t border-gray-50">
+                            <span class="text-[10px] uppercase font-bold text-gray-400 block mb-1">Unduh Laporan
+                                {{ date('M Y') }}:</span>
+                            <div class="grid grid-cols-1 gap-2">
+                                <a href="{{ route('admin.reports.generate', ['report_type' => 'items', 'user_id' => $user->id, 'start_month' => now()->month, 'end_month' => now()->month, 'year' => now()->year, 'action' => 'export']) }}"
+                                    class="flex items-center justify-center py-1.5 bg-emerald-50 text-emerald-700 rounded-lg hover:bg-emerald-100 transition text-[10px] font-bold uppercase tracking-wider">
+                                    📊 Export Excel Bulan Ini
+                                </a>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

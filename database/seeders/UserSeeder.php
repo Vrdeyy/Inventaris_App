@@ -6,47 +6,44 @@ use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
-class DatabaseSeeder extends Seeder
+class UserSeeder extends Seeder
 {
     /**
-     * Seed the application's database.
+     * Run the database seeds.
      */
     public function run(): void
     {
-        // Admin - Menggunakan firstOrCreate agar aman jika dijalankan berulang
-        User::firstOrCreate(
-            ['email' => 'admin@admin.com'],
-            [
+        // Admin (jika belum ada)
+        if (!User::where('email', 'admin@admin.com')->exists()) {
+            User::create([
                 'name' => 'Administrator',
+                'email' => 'admin@admin.com',
                 'password' => Hash::make('password'),
                 'role' => 'admin',
                 'is_active' => true,
-            ]
-        );
+            ]);
+        }
 
-        // User 1
-        User::firstOrCreate(
-            ['email' => 'user1@user.com'],
-            [
+        // User 1 (jika belum ada)
+        if (!User::where('email', 'user1@user.com')->exists()) {
+            User::create([
                 'name' => 'Petugas Inventaris 1',
+                'email' => 'user1@user.com',
                 'password' => Hash::make('password'),
                 'role' => 'user',
                 'is_active' => true,
-            ]
-        );
+            ]);
+        }
 
-        // User 2
-        User::firstOrCreate(
-            ['email' => 'user2@user.com'],
-            [
+        // User 2 (jika belum ada)
+        if (!User::where('email', 'user2@user.com')->exists()) {
+            User::create([
                 'name' => 'Petugas Inventaris 2',
+                'email' => 'user2@user.com',
                 'password' => Hash::make('password'),
                 'role' => 'user',
                 'is_active' => true,
-            ]
-        );
-
-        // Panggil DummyDataSeeder untuk data inventaris Mei - Desember 2025
-        $this->call(DummyDataSeeder::class);
+            ]);
+        }
     }
 }

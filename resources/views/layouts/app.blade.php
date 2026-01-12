@@ -38,10 +38,25 @@
                         <span class="truncate">Kelola Users</span>
                     </a>
                     <a href="{{ route('admin.monitoring') }}"
-                        class="flex items-center px-4 py-3 text-sm font-medium transition-colors rounded-lg {{ request()->routeIs('admin.monitoring') ? 'bg-indigo-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                        class="flex items-center px-4 py-3 text-sm font-medium transition-colors rounded-lg {{ request()->routeIs('admin.monitoring*') ? 'bg-indigo-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
                         <span class="truncate">Monitoring Barang</span>
                     </a>
-
+                    <a href="{{ route('admin.items.history') }}"
+                        class="flex items-center px-4 py-3 text-sm font-medium transition-colors rounded-lg {{ request()->routeIs('admin.items.history') ? 'bg-indigo-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                        <span class="truncate">Riwayat Barang</span>
+                    </a>
+                    <a href="{{ route('admin.reports.index') }}"
+                        class="flex items-center px-4 py-3 text-sm font-medium transition-colors rounded-lg {{ request()->routeIs('admin.reports.*') ? 'bg-indigo-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                        <span class="truncate">Cetak Laporan</span>
+                    </a>
+                    <a href="{{ route('admin.templates.index') }}"
+                        class="flex items-center px-4 py-3 text-sm font-medium transition-colors rounded-lg {{ request()->routeIs('admin.templates.*') ? 'bg-indigo-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                        <span class="truncate">Template Laporan</span>
+                    </a>
+                    <a href="{{ route('admin.maintenance.index') }}"
+                        class="flex items-center px-4 py-3 text-sm font-medium transition-colors rounded-lg {{ request()->routeIs('admin.maintenance.*') ? 'bg-indigo-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                        <span class="truncate">Pemeliharaan</span>
+                    </a>
                 @else
                     <a href="{{ route('user.dashboard') }}"
                         class="flex items-center px-4 py-3 text-sm font-medium transition-colors rounded-lg {{ request()->routeIs('user.dashboard') ? 'bg-indigo-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">

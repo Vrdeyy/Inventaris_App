@@ -28,9 +28,28 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::resource('users', AdminUserController::class);
 
 
-    // Monitoring
+    // Monitoring & History
     Route::get('monitoring', [\App\Http\Controllers\Admin\MonitoringController::class, 'index'])->name('monitoring');
     Route::get('monitoring/{user}', [\App\Http\Controllers\Admin\MonitoringController::class, 'showUser'])->name('monitoring.user');
+
+    Route::get('items/{item}', [\App\Http\Controllers\Admin\ItemHistoryController::class, 'show'])->name('items.show');
+    Route::get('items-history', [\App\Http\Controllers\Admin\ItemHistoryController::class, 'history'])->name('items.history');
+    Route::get('items-history/{user}', [\App\Http\Controllers\Admin\ItemHistoryController::class, 'userHistory'])->name('items.user_history');
+    Route::get('items-history-export', [\App\Http\Controllers\Admin\ItemHistoryController::class, 'exportHistory'])->name('items.history.export');
+
+    // Centralized Reports
+    Route::get('reports', [\App\Http\Controllers\Admin\ReportController::class, 'index'])->name('reports.index');
+    Route::get('reports/generate', [\App\Http\Controllers\Admin\ReportController::class, 'generate'])->name('reports.generate');
+
+    // Template Settings
+    Route::get('settings/template', [\App\Http\Controllers\Admin\TemplateController::class, 'index'])->name('templates.index');
+    Route::post('settings/template', [\App\Http\Controllers\Admin\TemplateController::class, 'upload'])->name('templates.upload');
+    Route::get('settings/template/download/{type}', [\App\Http\Controllers\Admin\TemplateController::class, 'download'])->name('templates.download');
+
+    // Maintenance (Pemeliharaan)
+    Route::get('maintenance', [\App\Http\Controllers\Admin\MaintenanceController::class, 'index'])->name('maintenance.index');
+    Route::post('maintenance/clear-history', [\App\Http\Controllers\Admin\MaintenanceController::class, 'clearHistory'])->name('maintenance.clear_history');
+    Route::post('maintenance/clear-items', [\App\Http\Controllers\Admin\MaintenanceController::class, 'clearItems'])->name('maintenance.clear_items');
 });
 
 // User Routes

@@ -11,12 +11,18 @@ class DashboardController extends Controller
     public function index()
     {
         $stats = [
-            'total' => Item::count(),
-            'baik' => Item::where('condition', 'baik')->count(),
-            'rusak' => Item::where('condition', 'rusak')->count(),
-            'hilang' => Item::where('condition', 'hilang')->count(),
+            'total' => Item::where('user_id', auth()->id())->count(),
+            'baik' => Item::where('user_id', auth()->id())->where('condition', 'baik')->count(),
+            'rusak' => Item::where('user_id', auth()->id())->where('condition', 'rusak')->count(),
+            'hilang' => Item::where('user_id', auth()->id())->where('condition', 'hilang')->count(),
         ];
 
-        return view('user.dashboard', compact('stats'));
+        $recentLogs = \App\Models\ItemLog::with('item')
+            ->where('user_id', auth()->id())
+            ->latest()
+            ->limit(5)
+            ->get();
+
+        return view('user.dashboard', compact('stats', 'recentLogs'));
     }
 }
