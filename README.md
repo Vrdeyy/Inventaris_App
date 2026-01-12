@@ -1,4 +1,4 @@
-# 📦 SIVENT - Sistem Informasi Inventaris Barang v2.5
+# 📦 Sistem Informasi Inventaris Barang 
 
 Platform manajemen aset dan inventaris modern berbasis web yang dirancang khusus untuk instansi pendidikan atau perkantoran. Sistem ini mengedepankan **akurasi data per unit**, **audit riwayat transparan**, dan **laporan Excel profesional dengan nested headers**.
 
