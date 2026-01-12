@@ -21,6 +21,9 @@ class MonitoringController extends Controller
             },
             'items as hilang_items' => function ($query) {
                 $query->where('condition', 'hilang');
+            },
+            'items as sebagian_rusak_items' => function ($query) {
+                $query->where('condition', 'sebagian_rusak');
             }
         ])->get();
 
@@ -32,13 +35,13 @@ class MonitoringController extends Controller
         // 1. Fetch Items with filtering
         $itemsQuery = $user->items();
         if ($search = $request->input('search')) {
-            $itemsQuery->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('code', 'like', "%{$search}%");
-            });
+            $itemsQuery->where('name', 'like', "%{$search}%");
         }
         if ($category = $request->input('category')) {
             $itemsQuery->where('category', $category);
+        }
+        if ($placementType = $request->input('placement_type')) {
+            $itemsQuery->where('placement_type', $placementType);
         }
         if ($condition = $request->input('condition')) {
             $itemsQuery->where('condition', $condition);
@@ -59,13 +62,13 @@ class MonitoringController extends Controller
         $query = $user->items();
 
         if ($search = $request->input('search')) {
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('code', 'like', "%{$search}%");
-            });
+            $query->where('name', 'like', "%{$search}%");
         }
         if ($category = $request->input('category')) {
             $query->where('category', $category);
+        }
+        if ($placementType = $request->input('placement_type')) {
+            $query->where('placement_type', $placementType);
         }
         if ($condition = $request->input('condition')) {
             $query->where('condition', $condition);

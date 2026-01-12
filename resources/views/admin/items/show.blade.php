@@ -31,30 +31,64 @@
                         <label class="text-xs font-medium text-gray-500 uppercase tracking-wider">Kategori</label>
                         <p class="text-gray-700">{{ $item->category }}</p>
                     </div>
-                    <div>
-                        <label class="text-xs font-medium text-gray-500 uppercase tracking-wider">Lokasi</label>
-                        <p class="text-gray-700">{{ $item->location }}</p>
-                    </div>
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="text-xs font-medium text-gray-500 uppercase tracking-wider">Jumlah</label>
-                            <p class="text-2xl font-bold text-indigo-600">{{ $item->quantity }}</p>
+                            <label class="text-xs font-medium text-gray-500 uppercase tracking-wider">Lokasi</label>
+                            <p class="text-gray-700">{{ $item->location }}</p>
                         </div>
                         <div>
-                            <label class="text-xs font-medium text-gray-500 uppercase tracking-wider">Kondisi</label>
+                            <label class="text-xs font-medium text-gray-500 uppercase tracking-wider">Penempatan</label>
                             @php
-                                $conditionColors = [
-                                    'baik' => 'bg-emerald-100 text-emerald-800 border-emerald-200',
-                                    'rusak' => 'bg-orange-100 text-orange-800 border-orange-200',
-                                    'hilang' => 'bg-red-100 text-red-800 border-red-200',
-                                ];
+                                $placementColor = $item->placement_type === 'dalam_lemari' 
+                                    ? 'bg-purple-100 text-purple-800 border-purple-200' 
+                                    : 'bg-blue-100 text-blue-800 border-blue-200';
                             @endphp
-                            <span
-                                class="inline-flex items-center px-3 py-1 text-sm font-semibold rounded-full border {{ $conditionColors[$item->condition] ?? 'bg-gray-100 text-gray-800' }}">
-                                {{ ucfirst($item->condition) }}
+                            <span class="inline-flex items-center px-3 py-1 text-sm font-semibold rounded-full border {{ $placementColor }}">
+                                {{ $item->placement_label }}
                             </span>
                         </div>
                     </div>
+                    
+                    <!-- Breakdown Jumlah -->
+                    <div class="p-4 bg-gray-50 rounded-lg">
+                        <label class="text-xs font-medium text-gray-500 uppercase tracking-wider block mb-3">Jumlah per Kondisi</label>
+                        <div class="grid grid-cols-3 gap-2 text-center">
+                            <div class="p-2 bg-emerald-50 rounded-lg border border-emerald-100">
+                                <div class="text-xl font-bold text-emerald-600">{{ $item->qty_baik }}</div>
+                                <div class="text-xs text-emerald-700">Baik</div>
+                            </div>
+                            <div class="p-2 bg-orange-50 rounded-lg border border-orange-100">
+                                <div class="text-xl font-bold text-orange-600">{{ $item->qty_rusak }}</div>
+                                <div class="text-xs text-orange-700">Rusak</div>
+                            </div>
+                            <div class="p-2 bg-red-50 rounded-lg border border-red-100">
+                                <div class="text-xl font-bold text-red-600">{{ $item->qty_hilang }}</div>
+                                <div class="text-xs text-red-700">Hilang</div>
+                            </div>
+                        </div>
+                        <div class="mt-3 pt-3 border-t border-gray-200 flex justify-between items-center">
+                            <span class="text-sm text-gray-600">Total:</span>
+                            <span class="text-2xl font-bold text-indigo-600">{{ $item->quantity }}</span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="text-xs font-medium text-gray-500 uppercase tracking-wider">Kondisi Keseluruhan</label>
+                        @php
+                            $conditionColors = [
+                                'baik' => 'bg-emerald-100 text-emerald-800 border-emerald-200',
+                                'rusak' => 'bg-orange-100 text-orange-800 border-orange-200',
+                                'hilang' => 'bg-red-100 text-red-800 border-red-200',
+                                'sebagian_rusak' => 'bg-amber-100 text-amber-800 border-amber-200',
+                            ];
+                            $conditionLabel = $item->condition === 'sebagian_rusak' ? 'Sebagian Rusak' : ucfirst($item->condition);
+                        @endphp
+                        <span
+                            class="inline-flex items-center px-3 py-1 text-sm font-semibold rounded-full border {{ $conditionColors[$item->condition] ?? 'bg-gray-100 text-gray-800' }}">
+                            {{ $conditionLabel }}
+                        </span>
+                    </div>
+
                     <div>
                         <label class="text-xs font-medium text-gray-500 uppercase tracking-wider">Deskripsi</label>
                         <p class="text-gray-700">{{ $item->description ?? '-' }}</p>

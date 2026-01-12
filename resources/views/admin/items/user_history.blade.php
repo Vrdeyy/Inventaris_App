@@ -19,9 +19,13 @@
 
         <div class="flex items-center space-x-3">
             <div class="flex items-center bg-emerald-50 border border-emerald-100 rounded-lg p-1.5 space-x-2">
+                @php
+                    $m = request('month');
+                    $monthName = $m ? date('F', mktime(0, 0, 0, $m, 1)) : now()->format('F');
+                @endphp
                 <a href="{{ route('admin.reports.generate', ['report_type' => 'history', 'user_id' => $user->id, 'start_month' => request('month') ?: now()->month, 'end_month' => request('month') ?: now()->month, 'year' => request('year') ?: now()->year, 'date' => request('date'), 'action' => 'export']) }}"
                     class="px-3 py-1 bg-white text-emerald-700 border border-emerald-200 rounded-md hover:bg-emerald-50 transition text-xs font-bold shadow-sm">
-                    📊 Export Excel
+                    📊 Export Excel ({{ $monthName }})
                 </a>
             </div>
         </div>
@@ -80,7 +84,7 @@
                                     <div>
                                         <span
                                             class="flex h-8 w-8 items-center justify-center rounded-full 
-                                                                                            {{ $log->action === 'create' ? 'bg-emerald-500' : ($log->action === 'update' ? 'bg-blue-500' : 'bg-red-500') }} shadow">
+                                                                                                    {{ $log->action === 'create' ? 'bg-emerald-500' : ($log->action === 'update' ? 'bg-blue-500' : 'bg-red-500') }} shadow">
                                             <svg class="h-4 w-4 text-white" fill="none" stroke="currentColor"
                                                 viewBox="0 0 24 24">
                                                 @if($log->action === 'create')

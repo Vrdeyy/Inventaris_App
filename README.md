@@ -1,112 +1,104 @@
-# 📦 SIVENT - Sistem Informasi Inventaris Barang v2.1
+# 📦 SIVENT - Sistem Informasi Inventaris Barang v2.5
 
-SIVENT adalah platform manajemen aset dan inventaris modern berbasis web yang dirancang khusus untuk instansi pendidikan atau perkantoran. Sistem ini mengedepankan **akurasi data real-time**, **keamanan riwayat aset**, dan **estetika antarmuka premium**.
-
----
-
-## 🌟 Fitur Utama (Features)
-
-### 👨‍💼 Panel Administrator (Pusat Kendali)
-- **Dashboard Premium**: Visualisasi statistik kondisi barang, leaderboard petugas paling aktif, dan timeline aktivitas terbaru secara real-time.
-- **Monitoring Multi-Petugas**: Admin dapat memantau ribuan barang yang dikelola oleh petugas berbeda dalam satu tampilan terpusat.
-- **Manajemen User**: Kontrol penuh untuk menambah, mengedit, menonaktifkan, atau mereset password petugas lapangan.
-- **Custom Template Laporan**: Fitur unggah template Excel (`.xlsx`) sehingga desain laporan cetak bisa disesuaikan dengan standar instansi tanpa mengubah kode program.
-- **Sistem Alert Pintar**: Notifikasi otomatis di dashboard jika terdapat lonjakan barang rusak atau barang hilang yang memerlukan perhatian segera.
-
-### � Panel Petugas (Inputer Data)
-- **Inventarisasi Cepat**: Form input barang yang detail (Kode, Nama, Kategori, Lokasi, Jumlah, Kondisi).
-- **Audit Trail (Log) Wajib**: Setiap perubahan data barang (update jumlah/kondisi) **wajib** disertai catatan alasan perubahan untuk transparansi.
-- **Manajemen Mandiri**: Petugas hanya fokus mengelola barang yang menjadi tanggung jawabnya (data isolasi).
-- **Export Excel Mandiri**: Petugas dapat mengunduh daftar aset miliknya kapan saja untuk keperluan pelaporan internal.
-
-### 🛠️ Fitur Pemeliharaan (System Maintenance)
-- **Pembersihan Log Cerdas**: Fitur untuk menghapus riwayat aktivitas lama agar database tetap ringan, dengan filter per bulan atau "sebelum periode tertentu".
-- **Arsip Sebelum Hapus**: Sistem otomatis menawarkan download backup Excel sebelum data dihapus permanen.
-- **Hard Reset**: Fitur untuk membersihkan seluruh data barang atau data per user jika terjadi kesalahan input masal di tahun ajaran baru.
-- **Keamanan Verifikasi**: Mewajibkan pengetikan kata kunci "RESET" untuk menghindari kesalahan fatal penghapusan data.
+Platform manajemen aset dan inventaris modern berbasis web yang dirancang khusus untuk instansi pendidikan atau perkantoran. Sistem ini mengedepankan **akurasi data per unit**, **audit riwayat transparan**, dan **laporan Excel profesional dengan nested headers**.
 
 ---
 
-## 🔄 Alur Kerja Sistem (System Flow)
+## 🌟 Fitur Unggulan (Premium Features)
 
-### 1. Alur Pendataan (Data Entry)
-1. **User/Petugas** mengisi form barang baru.
-2. Sistem mencatat data barang di tabel `items` dan membuat entri pertama di tabel `item_logs` sebagai riwayat "Penambahan Awal".
-3. Barang muncul di monitoring Admin secara otomatis.
+### � Data Akurat (Condition Breakdown)
+Berbeda dengan sistem inventaris biasa, SIVENT memecah setiap item menjadi 3 kondisi sekaligus:
+- **Baik**: Barang siap digunakan.
+- **Rusak**: Barang ada namun tidak berfungsi.
+- **Hilang**: Barang tercatat namun fisik tidak ditemukan.
+Sistem secara otomatis menghitung status (**Baik, Rusak, Hilang, atau Sebagian Rusak**) berdasarkan distribusi jumlah tersebut.
 
-### 2. Alur Pemeliharaan & Audit (Update Flow)
-1. User melakukan update kondisi (misal: "Baik" menjadi "Rusak").
-2. User memberikan deskripsi (misal: "Layar pecah saat dipindahkan").
-3. Sistem menyimpan status terbaru di tabel `items` dan menambahkan baris baru di `item_logs` yang mencatat detail perubahan tersebut.
-4. Admin dapat melihat "History" barang tersebut dari awal beli hingga kondisi saat ini.
+### 📑 Laporan Excel "Standard Audit"
+Export data menggunakan format **Nested Header** (Header Bertingkat) yang profesional:
+- **Warna Peach & Border Hitam**: Desain premium mengikuti standar laporan kantoran.
+- **Sub-Header Kondisi**: Kolom "Kondisi" membawahi sub-kolom "Baik", "Rusak", dan "Hilang".
+- **Multi-Sheet & Multi-Month**: Export ribuan data dalam hitungan detik dengan pemisahan sheet otomatis per bulan dan per penempatan (Dalam Ruang/Dalam Lemari).
 
-### 3. Alur Pelaporan (Reporting Logic)
-Sistem ini menggunakan algoritma **"Inventory Snapshot"**:
-- **Bukan Berdasarkan Tanggal Input**: Jika Anda export laporan bulan **Desember**, barang yang diinput bulan **Mei** tetap akan muncul.
-- **Akumulatif**: Laporan mencerminkan "Apa saja barang yang ada di gudang sampai detik ini".
-- **Multi-Sheet**: Jika export rentang (Mei-Des), sistem membuat file Excel dengan sheet yang berbeda untuk setiap bulan, menunjukkan perkembangan aset tiap bulannya.
+### 👮 Audit Trail & Monitoring (Anti-Manipulasi)
+- **Lock-Total Validation**: Saat mengedit, user dilarang "mengada-ngada" jumlah barang. Total baru harus sama dengan stok awal yang tercatat.
+- **Mandatory Description**: Setiap perubahan data **wajib** disertai alasan (misal: "Rusak karena jatuh saat dipindahkan").
+- **Monitoring Petugas**: Admin dapat memantau aset secara spesifik per petugas dengan filter kategori dan penempatan yang detail.
 
 ---
 
-## 🛠️ Tech Stack & Requirements
+## 🛠️ Tech Stack (Tools yang Digunakan)
 
-- **Backend**: Laravel 12 (Modern PHP Framework)
-- **Frontend**: Blade, Tailwind CSS, Alpine.js
-- **Excel Library**: PhpSpreadsheet
-- **Database**: MySQL 8.0+
-- **Minimum PHP**: 8.2
+Sistem ini dibangun menggunakan teknologi mutakhir untuk memastikan kecepatan dan kemudahan pemeliharaan:
+
+| Tool | Kegunaan |
+|------|----------|
+| **Laravel 11** | Backend framework utama |
+| **PHP 8.3** | Versi PHP terbaru untuk performa maksimal |
+| **Tailwind CSS** | Framework UI untuk desain premium & responsif |
+| **PhpSpreadsheet** | Mesin pembuat laporan Excel (.xlsx) |
+| **MySQL / MariaDB** | Penyimpanan database relasional |
+| **Laragon** | Rekomendasi server lokal (Development environment) |
+
+---
+
+## 🔄 Alur Penggunaan (System Flow)
+
+### 1. Peran Petugas (User)
+1. **Tambah Barang**: Input Nama, Kategori, Lokasi, dan pilih Penempatan (Ruang/Lemari).
+2. **Breakdown Jumlah**: Masukkan jumlah barang dan bagi ke dalam kategori Baik, Rusak, atau Hilang.
+3. **Kelola & Update**: Jika kondisi barang berubah, edit data dan berikan **Catatan Perubahan**. Sistem akan memvalidasi agar total barang tidak berubah tiba-tiba.
+
+### 2. Peran Admin
+1. **Monitoring**: Lihat sebaran aset di seluruh petugas. Bisa difilter berdasarkan penempatan atau kondisi spesifik.
+2. **Cek Riwayat**: Lihat kronologi barang dari pertama diinput hingga perubahan terakhir (siapa yang mengubah, kapan, dan alasannya).
+3. **Laporan Bulanan**: Export laporan aset dalam bentuk folder bulanan (sheet per bulan) untuk arsip instansi.
+4. **Maintenance**: Lakukan pembersihan log atau reset data tahun ajaran baru dengan fitur pengamanan kata kunci "RESET".
 
 ---
 
 ## ⚙️ Panduan Instalasi (Setup Guide)
 
-Lakukan langkah-langkah berikut untuk menjalankan SIVENT di komputer Anda:
+Pastikan Anda mengikuti langkah ini agar aplikasi berjalan lancar:
 
-### 1. Persiapan Awal
+### 1. Persiapan Environment
+Paling mudah gunakan **Laragon**. Pastikan versi PHP sudah **8.3**.
+
+### 2. Clone & Install
+Buka terminal di folder `laragon/www/` dan jalankan:
 ```bash
-# Clone repository
+# Clone project
 git clone https://github.com/Vrdeyy/Inventaris_App.git
-cd inventaris
+cd Inventaris_App
 
-# Install dependensi PHP & Javascript
+# Install Dependensi
 composer install
 npm install
 ```
 
-### 2. Konfigurasi Database
-1. Copy file `.env.example` menjadi `.env`.
-2. Buka file `.env` dan sesuaikan pengaturan DB:
-   ```env
-   DB_CONNECTION=mysql
-   DB_HOST=127.0.0.1
-   DB_PORT=3306
-   DB_DATABASE=nama_db_anda
-   DB_USERNAME=root
-   DB_PASSWORD=password_mysql_anda
-   ```
-3. Generate Key: `php artisan key:generate`
+### 3. Konfigurasi Database
+1. Buat database baru di MySQL (misal nama: `db_inventaris`).
+2. Copy file `.env.example` menjadi `.env`.
+3. Sesuaikan `DB_DATABASE`, `DB_USERNAME`, dan `DB_PASSWORD` di file `.env`.
 
-### 3. Migrasi & Data Dummy (Testing)
-Jalankan perintah ini untuk membuat tabel dan mengisi data dummy (Mei - Des 2025):
+### 4. Setup Database & Data Dummy
+Jalankan perintah sakti ini untuk me-reset database dan mengisi data simulasi (Mei-Desember 2025):
 ```bash
 php artisan migrate:fresh --seed
 ```
 
-### 4. Menjalankan Aplikasi
+### 5. Jalankan Aplikasi
 ```bash
-# Terminal 1: Jalankan Server Laravel
+# Terminal 1
 php artisan serve
 
-# Terminal 2: Jalankan Vite (Untuk CSS/JS)
+# Terminal 2
 npm run dev
 ```
-Akses di browser: `http://127.0.0.1:8000`
+Akses: `http://localhost:8000`
 
 ---
 
-## 🔑 Kredensial Login (Default)
-
-Sistem telah menyediakan akun bawaan untuk uji coba:
+## 🔑 Akun Login Default
 
 | Role | Email | Password |
 |------|-------|----------|
@@ -116,19 +108,9 @@ Sistem telah menyediakan akun bawaan untuk uji coba:
 
 ---
 
-## 📂 Struktur Template Excel
-
-Jika Admin ingin mengganti desain laporan, unggah file baru di menu **Template Laporan**:
-- **Monitoring**: Template untuk daftar aset (Kolom A-G).
-- **Riwayat**: Template untuk log aktivitas (Kolom A-G).
-*Pastikan format file adalah `.xlsx`.*
+## 📂 Custom Template Excel
+Admin bisa mengganti tampilan Excel di menu **Setting Template**. 
+Sistem akan membaca header dari template tersebut mulai dari **baris 5 dan 6** untuk daftar barang.
 
 ---
-
-## 📌 Catatan Keamanan
-- **Soft Deletes**: Barang yang dihapus user tidak benar-benar hilang dari database, hanya "disembunyikan". Admin bisa menghapusnya permanen via menu Pemeliharaan.
-- **Isolasi Data**: Petugas tidak bisa melihat atau mengedit barang milik petugas lain.
-
----
-
-© 2026 **Vrdeyy** 
+© 2026 **Vrdeyy** | Built with ❤️ for Better Asset Management.

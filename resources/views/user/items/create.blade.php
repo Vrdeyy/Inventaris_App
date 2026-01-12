@@ -12,16 +12,8 @@
                 @csrf
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                    <!-- Kode -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Kode Barang</label>
-                        <input type="text" name="code" value="{{ old('code') }}"
-                            class="w-full rounded-lg border-gray-300 focus:ring-indigo-500 focus:border-indigo-500 p-2 border"
-                            required>
-                    </div>
-
                     <!-- Nama -->
-                    <div>
+                    <div class="md:col-span-2">
                         <label class="block text-sm font-medium text-gray-700 mb-2">Nama Barang</label>
                         <input type="text" name="name" value="{{ old('name') }}"
                             class="w-full rounded-lg border-gray-300 focus:ring-indigo-500 focus:border-indigo-500 p-2 border"
@@ -44,23 +36,16 @@
                             required>
                     </div>
 
-                    <!-- Jumlah -->
+                    <!-- Penempatan -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Jumlah</label>
-                        <input type="number" name="quantity" value="{{ old('quantity', 1) }}" min="0"
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Penempatan</label>
+                        <select name="placement_type"
                             class="w-full rounded-lg border-gray-300 focus:ring-indigo-500 focus:border-indigo-500 p-2 border"
                             required>
-                    </div>
-
-                    <!-- Kondisi -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Kondisi Awal</label>
-                        <select name="condition"
-                            class="w-full rounded-lg border-gray-300 focus:ring-indigo-500 focus:border-indigo-500 p-2 border"
-                            required>
-                            <option value="baik">Baik</option>
-                            <option value="rusak">Rusak</option>
-                            <option value="hilang">Hilang</option>
+                            <option value="dalam_ruang" {{ old('placement_type') == 'dalam_ruang' ? 'selected' : '' }}>Dalam
+                                Ruang</option>
+                            <option value="dalam_lemari" {{ old('placement_type') == 'dalam_lemari' ? 'selected' : '' }}>Dalam
+                                Lemari</option>
                         </select>
                     </div>
 
@@ -73,6 +58,53 @@
                     </div>
                 </div>
 
+                <!-- Breakdown Jumlah per Kondisi -->
+                <div class="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <h3 class="text-sm font-semibold text-gray-700 mb-4">📦 Input Jumlah per Kondisi</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <!-- Jumlah Baik -->
+                        <div>
+                            <label class="block text-sm font-medium text-emerald-700 mb-2">
+                                <span class="inline-block w-3 h-3 bg-emerald-500 rounded-full mr-1"></span>
+                                Jumlah Baik
+                            </label>
+                            <input type="number" name="qty_baik" value="{{ old('qty_baik', 0) }}" min="0" id="qty_baik"
+                                class="w-full rounded-lg border-emerald-300 focus:ring-emerald-500 focus:border-emerald-500 p-2 border bg-emerald-50"
+                                oninput="calculateTotal()">
+                        </div>
+
+                        <!-- Jumlah Rusak -->
+                        <div>
+                            <label class="block text-sm font-medium text-orange-700 mb-2">
+                                <span class="inline-block w-3 h-3 bg-orange-500 rounded-full mr-1"></span>
+                                Jumlah Rusak
+                            </label>
+                            <input type="number" name="qty_rusak" value="{{ old('qty_rusak', 0) }}" min="0" id="qty_rusak"
+                                class="w-full rounded-lg border-orange-300 focus:ring-orange-500 focus:border-orange-500 p-2 border bg-orange-50"
+                                oninput="calculateTotal()">
+                        </div>
+
+                        <!-- Jumlah Hilang -->
+                        <div>
+                            <label class="block text-sm font-medium text-red-700 mb-2">
+                                <span class="inline-block w-3 h-3 bg-red-500 rounded-full mr-1"></span>
+                                Jumlah Hilang
+                            </label>
+                            <input type="number" name="qty_hilang" value="{{ old('qty_hilang', 0) }}" min="0"
+                                id="qty_hilang"
+                                class="w-full rounded-lg border-red-300 focus:ring-red-500 focus:border-red-500 p-2 border bg-red-50"
+                                oninput="calculateTotal()">
+                        </div>
+                    </div>
+
+                    <!-- Total Calculated -->
+                    <div class="mt-4 pt-4 border-t border-gray-200 flex items-center justify-between">
+                        <span class="text-sm font-medium text-gray-600">Total Jumlah:</span>
+                        <span id="total_display" class="text-xl font-bold text-indigo-600">0</span>
+                        <input type="hidden" name="quantity" id="quantity" value="0">
+                    </div>
+                </div>
+
                 <div class="flex justify-end pt-4 border-t border-gray-100">
                     <button type="submit"
                         class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition shadow-sm">Simpan
@@ -81,4 +113,19 @@
             </form>
         </div>
     </div>
+
+    <script>
+        function calculateTotal() {
+            const qtyBaik = parseInt(document.getElementById('qty_baik').value) || 0;
+            const qtyRusak = parseInt(document.getElementById('qty_rusak').value) || 0;
+            const qtyHilang = parseInt(document.getElementById('qty_hilang').value) || 0;
+            const total = qtyBaik + qtyRusak + qtyHilang;
+
+            document.getElementById('total_display').textContent = total;
+            document.getElementById('quantity').value = total;
+        }
+
+        // Calculate on page load
+        document.addEventListener('DOMContentLoaded', calculateTotal);
+    </script>
 @endsection

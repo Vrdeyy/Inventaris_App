@@ -76,41 +76,70 @@
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
+
                         <th scope="col"
-                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kode</th>
-                        <th scope="col"
-                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama
+                            class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama
                             Barang</th>
                         <th scope="col"
-                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lokasi
+                            class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lokasi
                         </th>
                         <th scope="col"
-                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jumlah
+                            class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Penempatan</th>
+                        <th scope="col"
+                            class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Jumlah
                         </th>
                         <th scope="col"
-                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kondisi
+                            class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kondisi
                         </th>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
                     @forelse($items as $item)
                         <tr>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ $item->code }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $item->name }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $item->location }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $item->quantity }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                            {{ $item->condition === 'baik' ? 'bg-green-100 text-green-800' : '' }}
-                                            {{ $item->condition === 'rusak' ? 'bg-red-100 text-red-800' : '' }}
-                                            {{ $item->condition === 'hilang' ? 'bg-gray-100 text-gray-800' : '' }}">
-                                    {{ ucfirst($item->condition) }}
+
+                            <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{{ $item->name }}</td>
+                            <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{{ $item->location }}</td>
+                            <td class="px-4 py-4 whitespace-nowrap">
+                                @php
+                                    $placementColor = $item->placement_type === 'dalam_lemari'
+                                        ? 'bg-purple-100 text-purple-800'
+                                        : 'bg-blue-100 text-blue-800';
+                                @endphp
+                                <span
+                                    class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $placementColor }}">
+                                    {{ $item->placement_label }}
+                                </span>
+                            </td>
+                            <td class="px-4 py-4 whitespace-nowrap text-center">
+                                <div class="text-sm font-bold text-gray-900">{{ $item->quantity }}</div>
+                                <div class="text-xs text-gray-500">
+                                    @if($item->qty_baik > 0)<span class="text-emerald-600">{{ $item->qty_baik }}B</span>@endif
+                                    @if($item->qty_rusak > 0)<span
+                                    class="text-orange-600 ml-1">{{ $item->qty_rusak }}R</span>@endif
+                                    @if($item->qty_hilang > 0)<span
+                                    class="text-red-600 ml-1">{{ $item->qty_hilang }}H</span>@endif
+                                </div>
+                            </td>
+                            <td class="px-4 py-4 whitespace-nowrap">
+                                @php
+                                    $conditionColors = [
+                                        'baik' => 'bg-green-100 text-green-800',
+                                        'rusak' => 'bg-red-100 text-red-800',
+                                        'hilang' => 'bg-gray-100 text-gray-800',
+                                        'sebagian_rusak' => 'bg-amber-100 text-amber-800',
+                                    ];
+                                    $conditionLabel = $item->condition === 'sebagian_rusak' ? 'Sebagian Rusak' : ucfirst($item->condition);
+                                @endphp
+                                <span
+                                    class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $conditionColors[$item->condition] ?? 'bg-gray-100 text-gray-800' }}">
+                                    {{ $conditionLabel }}
                                 </span>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="px-6 py-10 text-center text-gray-500">
+                            <td colspan="6" class="px-6 py-10 text-center text-gray-500">
                                 Tidak ada data barang jadi.
                             </td>
                         </tr>

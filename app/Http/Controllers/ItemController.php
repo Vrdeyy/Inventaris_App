@@ -31,10 +31,7 @@ class ItemController extends Controller
         }
 
         if ($search = $request->input('search')) {
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('code', 'like', "%{$search}%");
-            });
+            $query->where('name', 'like', "%{$search}%");
         }
 
         if ($category = $request->input('category')) {
@@ -43,6 +40,10 @@ class ItemController extends Controller
 
         if ($location = $request->input('location')) {
             $query->where('location', $location);
+        }
+
+        if ($placement_type = $request->input('placement_type')) {
+            $query->where('placement_type', $placement_type);
         }
 
         // Admin bisa filter berdasarkan user_id
@@ -71,18 +72,42 @@ class ItemController extends Controller
             'name' => 'required',
             'category' => 'required',
             'location' => 'required',
-            'quantity' => 'required|integer|min:0',
-            'condition' => 'required|in:baik,rusak,hilang',
+            'placement_type' => 'required|in:dalam_ruang,dalam_lemari',
+            'qty_baik' => 'required|integer|min:0',
+            'qty_rusak' => 'required|integer|min:0',
+            'qty_hilang' => 'required|integer|min:0',
             'date_input' => 'required|date',
         ]);
 
+        // Calculate total and condition
+        $qtyBaik = $validated['qty_baik'];
+        $qtyRusak = $validated['qty_rusak'];
+        $qtyHilang = $validated['qty_hilang'];
+        $total = $qtyBaik + $qtyRusak + $qtyHilang;
+
+        // Determine condition
+        if ($total == 0) {
+            $condition = 'baik';
+        } elseif ($qtyHilang == $total) {
+            $condition = 'hilang';
+        } elseif ($qtyRusak == $total) {
+            $condition = 'rusak';
+        } elseif ($qtyBaik == $total) {
+            $condition = 'baik';
+        } else {
+            $condition = 'sebagian_rusak';
+        }
+
         $item = Item::create([
-            'code' => $validated['code'],
             'name' => $validated['name'],
             'category' => $validated['category'],
             'location' => $validated['location'],
-            'quantity' => $validated['quantity'],
-            'condition' => $validated['condition'],
+            'placement_type' => $validated['placement_type'],
+            'quantity' => $total,
+            'qty_baik' => $qtyBaik,
+            'qty_rusak' => $qtyRusak,
+            'qty_hilang' => $qtyHilang,
+            'condition' => $condition,
             'user_id' => Auth::id(),
             'created_at' => $validated['date_input'],
         ]);
@@ -91,9 +116,9 @@ class ItemController extends Controller
             'item_id' => $item->id,
             'user_id' => Auth::id(),
             'action' => 'create',
-            'new_condition' => $validated['condition'],
-            'new_quantity' => $validated['quantity'],
-            'description' => 'Input baru',
+            'new_condition' => $condition,
+            'new_quantity' => $total,
+            'description' => 'Input baru (Baik: ' . $qtyBaik . ', Rusak: ' . $qtyRusak . ', Hilang: ' . $qtyHilang . ')',
         ]);
 
         return redirect()->route('user.items.index')->with('success', 'Barang berhasil ditambahkan.');
@@ -117,21 +142,52 @@ class ItemController extends Controller
         }
 
         $validated = $request->validate([
-            'name' => 'required',
-            'location' => 'required',
-            'quantity' => 'required|integer|min:0',
-            'condition' => 'required|in:baik,rusak,hilang',
-            'description' => 'required|string', // Note for history
+            'name' => 'required|string|max:255',
+            'location' => 'required|string|max:255',
+            'placement_type' => 'required|in:dalam_ruang,dalam_lemari',
+            'qty_baik' => 'required|integer|min:0',
+            'qty_rusak' => 'required|integer|min:0',
+            'qty_hilang' => 'required|integer|min:0',
+            'description' => 'required|string|min:5', // Mewajibkan catatan yang bermakna
+        ], [
+            'qty_baik.required' => 'Jumlah barang baik harus diisi (boleh 0).',
+            'qty_rusak.required' => 'Jumlah barang rusak harus diisi (boleh 0).',
+            'qty_hilang.required' => 'Jumlah barang hilang harus diisi (boleh 0).',
+            'description.required' => 'Harap isi catatan perubahan untuk histori barang.',
+            'description.min' => 'Catatan terlalu pendek, harap berikan penjelasan yang agak detail.',
         ]);
 
         $old_condition = $item->condition;
         $old_quantity = $item->quantity;
 
+        // Calculate total and condition
+        $qtyBaik = $validated['qty_baik'];
+        $qtyRusak = $validated['qty_rusak'];
+        $qtyHilang = $validated['qty_hilang'];
+        $total = $qtyBaik + $qtyRusak + $qtyHilang;
+
+        // Determine condition
+        if ($total == 0) {
+            $condition = 'baik';
+        } elseif ($qtyHilang == $total) {
+            $condition = 'hilang';
+        } elseif ($qtyRusak == $total) {
+            $condition = 'rusak';
+        } elseif ($qtyBaik == $total) {
+            $condition = 'baik';
+        } else {
+            $condition = 'sebagian_rusak';
+        }
+
         $item->update([
             'name' => $validated['name'],
             'location' => $validated['location'],
-            'quantity' => $validated['quantity'],
-            'condition' => $validated['condition'],
+            'placement_type' => $validated['placement_type'],
+            'quantity' => $total,
+            'qty_baik' => $qtyBaik,
+            'qty_rusak' => $qtyRusak,
+            'qty_hilang' => $qtyHilang,
+            'condition' => $condition,
         ]);
 
         ItemLog::create([
@@ -139,10 +195,10 @@ class ItemController extends Controller
             'user_id' => Auth::id(),
             'action' => 'update',
             'old_condition' => $old_condition,
-            'new_condition' => $validated['condition'],
+            'new_condition' => $condition,
             'old_quantity' => $old_quantity,
-            'new_quantity' => $validated['quantity'],
-            'description' => $validated['description'],
+            'new_quantity' => $total,
+            'description' => $validated['description'] . ' (Baik: ' . $qtyBaik . ', Rusak: ' . $qtyRusak . ', Hilang: ' . $qtyHilang . ')',
         ]);
 
         return redirect()->route('user.items.index')->with('success', 'Barang berhasil diupdate.');
@@ -258,6 +314,7 @@ class ItemController extends Controller
 
     /**
      * Export items spanning multiple months - each month gets its own sheet
+     * Now creates 2 sheets per month: "Bulan - Dalam Ruang" and "Bulan - Dalam Lemari"
      */
     private function exportMultiMonthItems($allItems, $startMonth, $endMonth, $year, $userInfo)
     {
@@ -276,6 +333,8 @@ class ItemController extends Controller
             $templateSpreadsheet = IOFactory::load($templatePath);
         }
 
+        $placementTypes = ['dalam_ruang' => 'Dalam Ruang', 'dalam_lemari' => 'Dalam Lemari'];
+
         for ($m = $startMonth; $m <= $endMonth; $m++) {
             $monthName = $this->getIndonesianMonth($m);
 
@@ -285,24 +344,30 @@ class ItemController extends Controller
                 return $item->created_at <= $monthEnd;
             });
 
-            // Create new sheet
-            $sheet = $spreadsheet->createSheet();
-            $sheet->setTitle($monthName);
+            // Create 2 sheets per month: one for each placement type
+            foreach ($placementTypes as $placementKey => $placementLabel) {
+                $placementItems = $monthItems->where('placement_type', $placementKey);
 
-            // Copy from template or create default header
-            if ($templateSpreadsheet) {
-                $this->copyTemplateToSheet($templateSpreadsheet->getActiveSheet(), $sheet);
-            } else {
-                $this->createDefaultItemsHeader($sheet, $monthName, $year);
-            }
+                // Create new sheet
+                $sheet = $spreadsheet->createSheet();
+                $sheetTitle = substr($monthName, 0, 15) . ' - ' . substr($placementLabel, 0, 12);
+                $sheet->setTitle($sheetTitle);
 
-            // Fill data starting from row 6
-            $this->fillItemsData($sheet, $monthItems, 6);
+                // Copy from template or create default header
+                if ($templateSpreadsheet) {
+                    $this->copyTemplateToSheet($templateSpreadsheet->getActiveSheet(), $sheet);
+                } else {
+                    $this->createDefaultItemsHeader($sheet, $monthName . ' - ' . $placementLabel, $year);
+                }
 
-            // Apply styling to data rows
-            $lastRow = 5 + $monthItems->count();
-            if ($monthItems->count() > 0) {
-                $this->applyDataStyles($sheet, 6, $lastRow, 'A', 'G');
+                // Fill data starting from row 7 (karena header 2 baris: 5 & 6)
+                $this->fillItemsData($sheet, $placementItems, 7);
+
+                // Apply styling to data rows
+                $lastRow = 6 + $placementItems->count();
+                if ($placementItems->count() > 0) {
+                    $this->applyDataStyles($sheet, 7, $lastRow, 'A', 'J');
+                }
             }
         }
 
@@ -337,13 +402,13 @@ class ItemController extends Controller
             // CLEANUP: Pastikan baris 1-4 bersih dari warna background
             $this->cleanHeaderArea($sheet);
 
-            // Fill data starting from row 6
-            $this->fillItemsData($sheet, $items, 6);
+            // Fill data starting from row 7
+            $this->fillItemsData($sheet, $items, 7);
 
             // Apply styling to data rows
-            $lastRow = 5 + $items->count();
+            $lastRow = 6 + $items->count();
             if ($items->count() > 0) {
-                $this->applyDataStylesFromTemplate($sheet, 6, $lastRow, 'A', 'G');
+                $this->applyDataStylesFromTemplate($sheet, 7, $lastRow, 'A', 'J');
             }
 
             return $this->outputExcel($spreadsheet, $filename);
@@ -351,98 +416,91 @@ class ItemController extends Controller
 
         // Fallback: Create new spreadsheet with default styling
         $spreadsheet = new Spreadsheet();
-        $sheet = $spreadsheet->getActiveSheet();
+        $spreadsheet->removeSheetByIndex(0);
 
-        if ($month) {
-            $sheet->setTitle($month);
+        $placementTypes = ['dalam_ruang' => 'Dalam Ruang', 'dalam_lemari' => 'Dalam Lemari'];
+
+        foreach ($placementTypes as $placementKey => $placementLabel) {
+            $placementItems = $items->where('placement_type', $placementKey);
+
+            $sheet = $spreadsheet->createSheet();
+            $sheetTitle = ($month ? substr($month, 0, 15) : 'Semua') . ' - ' . substr($placementLabel, 0, 12);
+            $sheet->setTitle($sheetTitle);
+
+            // Create styled header (Nested)
+            $this->createDefaultItemsHeader($sheet, ($month ?: 'Semua') . ' - ' . $placementLabel, $year);
+
+            // Fill data starting from row 7
+            $this->fillItemsData($sheet, $placementItems, 7);
+
+            // Apply styling to data rows
+            $lastRow = 6 + $placementItems->count();
+            if ($placementItems->count() > 0) {
+                $this->applyDataStyles($sheet, 7, $lastRow, 'A', 'J');
+            }
         }
 
-        // Create styled header
-        $this->createDefaultItemsHeader($sheet, $month, $year);
-
-        // Fill data
-        $this->fillItemsData($sheet, $items, 6);
-
-        // Apply styling to data rows
-        $lastRow = 5 + $items->count();
-        if ($items->count() > 0) {
-            $this->applyDataStyles($sheet, 6, $lastRow, 'A', 'G');
-        }
+        $spreadsheet->setActiveSheetIndex(0);
 
         return $this->outputExcel($spreadsheet, $filename);
     }
 
     /**
      * Create default header with styling for items
+     * Using Nested Header (Header Bertingkat)
      */
     private function createDefaultItemsHeader($sheet, $month = null, $year = null)
     {
-        // Title
-        $sheet->mergeCells('A1:G1');
-        $sheet->setCellValue('A1', 'DAFTAR INVENTARIS BARANG');
+        // Title (Baris 1)
+        $sheet->mergeCells('A1:J1');
+        $sheet->setCellValue('A1', 'Inventaris Barang - Barang Laboratorium');
         $sheet->getStyle('A1')->applyFromArray([
-            'font' => [
-                'bold' => true,
-                'size' => 16,
-            ],
-            'alignment' => [
-                'horizontal' => Alignment::HORIZONTAL_CENTER,
-                'vertical' => Alignment::VERTICAL_CENTER,
-            ],
+            'font' => ['bold' => true, 'size' => 14],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
         ]);
         $sheet->getRowDimension(1)->setRowHeight(25);
 
-        // Subtitle/Period
-        $sheet->mergeCells('A2:G2');
-        $periodText = 'Periode: ' . ($month ?: 'Semua Bulan') . ' ' . ($year ?: date('Y'));
-        $sheet->setCellValue('A2', $periodText);
-        $sheet->getStyle('A2')->applyFromArray([
-            'font' => [
-                'bold' => true,
-                'size' => 11,
-            ],
-            'alignment' => [
-                'horizontal' => Alignment::HORIZONTAL_CENTER,
-            ],
-        ]);
-
-        // Print date
-        $sheet->mergeCells('A3:G3');
-        $sheet->setCellValue('A3', 'Dicetak: ' . date('d/m/Y H:i'));
-        $sheet->getStyle('A3')->applyFromArray([
-            'font' => [
-                'italic' => true,
-                'size' => 9,
-            ],
-            'alignment' => [
-                'horizontal' => Alignment::HORIZONTAL_CENTER,
-            ],
-        ]);
-
-        // Empty row 4
+        // Baris 2, 3, 4 dikosongkan agar ada jarak sesuai template
+        $sheet->getRowDimension(2)->setRowHeight(15);
+        $sheet->getRowDimension(3)->setRowHeight(15);
         $sheet->getRowDimension(4)->setRowHeight(10);
 
-        // Header row (row 5)
-        $headers = ['No', 'Nama Barang', 'Kategori', 'Lokasi', 'Kondisi', 'Jumlah', 'Tanggal'];
-        $columns = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
+        // Header Row 5 & 6 (Nested) - Label dibuat LOWERCASE sesuai template
+        $headers = [
+            'A5:A6' => 'no',
+            'B5:B6' => 'nama',
+            'C5:C6' => 'kategori',
+            'D5:D6' => 'lok',
+            'E5:G5' => 'kondisi per unit',
+            'H5:H6' => 'total',
+            'I5:I6' => 'status',
+            'J5:J6' => 'tanggal input'
+        ];
 
-        foreach ($headers as $index => $header) {
-            $sheet->setCellValue($columns[$index] . '5', $header);
+        foreach ($headers as $range => $label) {
+            $sheet->mergeCells($range);
+            $sheet->setCellValue(explode(':', $range)[0], $label);
         }
 
-        // Style header row
-        $sheet->getStyle('A5:G5')->applyFromArray([
+        // Sub-header Kondisi (Baris 6)
+        $sheet->setCellValue('E6', 'baik');
+        $sheet->setCellValue('F6', 'rusak');
+        $sheet->setCellValue('G6', 'hilang');
+
+        // Style Header (A5:J6)
+        $sheet->getStyle('A5:J6')->applyFromArray([
             'font' => [
                 'bold' => true,
-                'color' => ['rgb' => 'FFFFFF'],
+                'color' => ['rgb' => '000000'], // Font Hitam sesuai template
             ],
             'fill' => [
                 'fillType' => Fill::FILL_SOLID,
-                'startColor' => ['rgb' => '4F46E5'], // Indigo
+                'startColor' => ['rgb' => 'FDE9D9'], // Warna Peach sesuai template
             ],
             'alignment' => [
                 'horizontal' => Alignment::HORIZONTAL_CENTER,
                 'vertical' => Alignment::VERTICAL_CENTER,
+                'wrapText' => true,
             ],
             'borders' => [
                 'allBorders' => [
@@ -451,33 +509,43 @@ class ItemController extends Controller
                 ],
             ],
         ]);
-        $sheet->getRowDimension(5)->setRowHeight(20);
 
-        // Set column widths
-        $sheet->getColumnDimension('A')->setWidth(5);
-        $sheet->getColumnDimension('B')->setWidth(30);
-        $sheet->getColumnDimension('C')->setWidth(18);
-        $sheet->getColumnDimension('D')->setWidth(20);
-        $sheet->getColumnDimension('E')->setWidth(12);
-        $sheet->getColumnDimension('F')->setWidth(10);
-        $sheet->getColumnDimension('G')->setWidth(12);
+        // Column Widths
+        $widths = ['A' => 5, 'B' => 28, 'C' => 15, 'D' => 18, 'E' => 8, 'F' => 8, 'G' => 8, 'H' => 8, 'I' => 15, 'J' => 14];
+        foreach ($widths as $col => $w)
+            $sheet->getColumnDimension($col)->setWidth($w);
+
+        $sheet->getRowDimension(5)->setRowHeight(20);
+        $sheet->getRowDimension(6)->setRowHeight(20);
     }
 
     /**
      * Fill items data to sheet
+     * Updated with breakdown columns
      */
     private function fillItemsData($sheet, $items, $startRow)
     {
         $row = $startRow;
         $no = 1;
         foreach ($items as $item) {
+            $conditionLabel = $item->condition === 'sebagian_rusak' ? 'Sebagian Rusak' : ucfirst($item->condition);
+
             $sheet->setCellValue('A' . $row, $no++);
             $sheet->setCellValue('B' . $row, $item->name);
             $sheet->setCellValue('C' . $row, $item->category);
             $sheet->setCellValue('D' . $row, $item->location);
-            $sheet->setCellValue('E' . $row, ucfirst($item->condition));
-            $sheet->setCellValue('F' . $row, $item->quantity);
-            $sheet->setCellValue('G' . $row, $item->created_at->format('d/m/Y'));
+
+            // Tulis Angka & Paksa Format menjadi General/Number (Menghindari "00/01/1900")
+            $sheet->setCellValue('E' . $row, $item->qty_baik);
+            $sheet->setCellValue('F' . $row, $item->qty_rusak);
+            $sheet->setCellValue('G' . $row, $item->qty_hilang);
+            $sheet->setCellValue('H' . $row, $item->quantity);
+
+            // Reset format kolom E-H ke General agar tidak jadi tanggal
+            $sheet->getStyle("E{$row}:H{$row}")->getNumberFormat()->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_GENERAL);
+
+            $sheet->setCellValue('I' . $row, $conditionLabel);
+            $sheet->setCellValue('J' . $row, $item->created_at->format('d/m/Y'));
             $row++;
         }
     }
@@ -504,23 +572,18 @@ class ItemController extends Controller
 
         // Center align specific columns
         $sheet->getStyle("A{$startRow}:A{$endRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-        $sheet->getStyle("E{$startRow}:E{$endRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-        $sheet->getStyle("F{$startRow}:F{$endRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-        $sheet->getStyle("G{$startRow}:G{$endRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle("E{$startRow}:H{$endRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle("I{$startRow}:I{$endRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle("J{$startRow}:J{$endRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
         // Force Number Formatting
-        $sheet->getStyle("F{$startRow}:F{$endRow}")->getNumberFormat()->setFormatCode('#,##0');
-        $sheet->getStyle("G{$startRow}:G{$endRow}")->getNumberFormat()->setFormatCode('dd/mm/yyyy');
+        $sheet->getStyle("E{$startRow}:H{$endRow}")->getNumberFormat()->setFormatCode('#,##0');
+        $sheet->getStyle("J{$startRow}:J{$endRow}")->getNumberFormat()->setFormatCode('dd/mm/yyyy');
 
-        // Alternating row colors
+        // Alternating row colors (Sangat tipis agar tetap bersih)
         for ($row = $startRow; $row <= $endRow; $row++) {
             if (($row - $startRow) % 2 == 1) {
-                $sheet->getStyle("A{$row}:G{$row}")->applyFromArray([
-                    'fill' => [
-                        'fillType' => Fill::FILL_SOLID,
-                        'startColor' => ['rgb' => 'F3F4F6'], // Light gray
-                    ],
-                ]);
+                $sheet->getStyle("A{$row}:J{$row}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('FAF8F6');
             }
         }
     }
@@ -530,9 +593,6 @@ class ItemController extends Controller
      */
     private function applyDataStylesFromTemplate($sheet, $startRow, $endRow, $startCol, $endCol)
     {
-        // Get style from first data row in template
-        $templateRowStyle = $sheet->getStyle("{$startCol}{$startRow}:{$endCol}{$startRow}");
-
         // Apply borders at minimum
         $range = "{$startCol}{$startRow}:{$endCol}{$endRow}";
         $sheet->getStyle($range)->applyFromArray([
@@ -546,35 +606,34 @@ class ItemController extends Controller
 
         // Center align specific columns
         $sheet->getStyle("A{$startRow}:A{$endRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-        $sheet->getStyle("E{$startRow}:E{$endRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-        $sheet->getStyle("F{$startRow}:F{$endRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-        $sheet->getStyle("G{$startRow}:G{$endRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle("E{$startRow}:H{$endRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle("J{$startRow}:J{$endRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
-        // Force Number Formatting (Template fix)
-        $sheet->getStyle("F{$startRow}:F{$endRow}")->getNumberFormat()->setFormatCode('#,##0');
-        $sheet->getStyle("G{$startRow}:G{$endRow}")->getNumberFormat()->setFormatCode('dd/mm/yyyy');
+        // Force Number/Date Formatting
+        $sheet->getStyle("E{$startRow}:H{$endRow}")->getNumberFormat()->setFormatCode('#,##0');
+        $sheet->getStyle("J{$startRow}:J{$endRow}")->getNumberFormat()->setFormatCode('dd/mm/yyyy');
     }
 
     /**
-     * Copy template sheet to new sheet (header rows 1-5)
-     * Memperbaiki agar tidak bocor warna ke baris 1-4
+     * Copy template sheet to new sheet (header rows 1-6)
+     * Sekarang mendukung Nested Header (2 baris header: 5 & 6)
      */
     private function copyTemplateToSheet($templateSheet, $targetSheet)
     {
-        // Copy rows 1-5 (header)
-        for ($row = 1; $row <= 5; $row++) {
-            for ($col = 'A'; $col <= 'G'; $col++) {
+        // Copy rows 1-6 (header)
+        for ($row = 1; $row <= 6; $row++) {
+            for ($col = 'A'; $col <= 'J'; $col++) {
                 $cellValue = $templateSheet->getCell($col . $row)->getValue();
                 $targetSheet->setCellValue($col . $row, $cellValue);
 
                 // Copy style
                 $style = $templateSheet->getStyle($col . $row);
 
-                // Jika Baris 5, copy seluruh style (termasuk background)
-                if ($row == 5) {
+                // Jika Baris 5 atau 6, copy seluruh style (termasuk background/warna)
+                if ($row >= 5) {
                     $targetSheet->duplicateStyle($style, $col . $row);
                 } else {
-                    // Baris 1-4: Hanya copy font dan alignment, buang background
+                    // Baris 1-4: Hanya copy font dan alignment, buang background warna
                     $targetStyle = $targetSheet->getStyle($col . $row);
                     $targetStyle->getFont()->applyFromArray($style->getFont()->exportArray());
                     $targetStyle->getAlignment()->applyFromArray($style->getAlignment()->exportArray());
@@ -590,18 +649,18 @@ class ItemController extends Controller
             );
         }
 
-        // Copy column widths
-        for ($col = 'A'; $col <= 'G'; $col++) {
+        // Copy column widths A sampai J
+        foreach (range('A', 'J') as $col) {
             $targetSheet->getColumnDimension($col)->setWidth(
                 $templateSheet->getColumnDimension($col)->getWidth()
             );
         }
 
-        // Copy merged cells
+        // Copy merged cells (terutama untuk judul dan penempatan)
         foreach ($templateSheet->getMergeCells() as $mergeCell) {
-            // Only copy merges in rows 1-5
+            // Hanya copy merge yang ada di baris 1-6
             preg_match('/([A-Z]+)(\d+):([A-Z]+)(\d+)/', $mergeCell, $matches);
-            if (isset($matches[2]) && $matches[2] <= 5) {
+            if (isset($matches[2]) && $matches[2] <= 6) {
                 $targetSheet->mergeCells($mergeCell);
             }
         }
@@ -613,7 +672,7 @@ class ItemController extends Controller
     private function cleanHeaderArea($sheet)
     {
         for ($row = 1; $row <= 4; $row++) {
-            $sheet->getStyle("A{$row}:G{$row}")->applyFromArray([
+            $sheet->getStyle("A{$row}:J{$row}")->applyFromArray([
                 'fill' => [
                     'fillType' => Fill::FILL_NONE,
                 ],

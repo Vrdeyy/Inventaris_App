@@ -361,15 +361,18 @@ class ItemHistoryController extends Controller
             $sheet->setCellValue('A' . $row, $no++);
             $sheet->setCellValue('B' . $row, $log->created_at->format('d/m/Y H:i'));
             $sheet->setCellValue('C' . $row, $log->user->name ?? '-');
-            $sheet->setCellValue('D' . $row, ($log->item->code ?? '-') . ' - ' . ($log->item->name ?? '-'));
+            $sheet->setCellValue('D' . $row, $log->item->name ?? '-');
             $sheet->setCellValue('E' . $row, ucfirst($log->action));
 
             // Format Perubahan
             $perubahan = "-";
             if ($log->action === 'update') {
-                $perubahan = "Kondisi: {$log->old_condition} -> {$log->new_condition}, Jumlah: {$log->old_quantity} -> {$log->new_quantity}";
+                $perubahan = "Kondisi: " . ucfirst($log->old_condition) . " -> " . ucfirst($log->new_condition);
+                if ($log->old_quantity != $log->new_quantity) {
+                    $perubahan .= " | Jumlah: {$log->old_quantity} -> {$log->new_quantity}";
+                }
             } elseif ($log->action === 'create') {
-                $perubahan = "Baru: {$log->new_condition} ({$log->new_quantity})";
+                $perubahan = "Input Baru: " . ucfirst($log->new_condition) . " ({$log->new_quantity} Unit)";
             }
 
             $sheet->setCellValue('F' . $row, $perubahan);

@@ -41,9 +41,9 @@
 
     <!-- Filter -->
     <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6">
-        <form action="{{ route('admin.monitoring.user', $user->id) }}" method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <form action="{{ route('admin.monitoring.user', $user->id) }}" method="GET" class="grid grid-cols-1 md:grid-cols-5 gap-4">
             <div>
-                <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari Kode/Nama..." class="w-full rounded-lg border-gray-300 text-sm p-2 border focus:ring-indigo-500 focus:border-indigo-500">
+                <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari Nama Barang..." class="w-full rounded-lg border-gray-300 text-sm p-2 border focus:ring-indigo-500 focus:border-indigo-500">
             </div>
             <div>
                 <select name="category" class="w-full rounded-lg border-gray-300 text-sm p-2 border">
@@ -57,11 +57,19 @@
                 </select>
             </div>
             <div>
+                <select name="placement_type" class="w-full rounded-lg border-gray-300 text-sm p-2 border">
+                    <option value="">Semua Penempatan</option>
+                    <option value="dalam_ruang" {{ request('placement_type') == 'dalam_ruang' ? 'selected' : '' }}>Dalam Ruang</option>
+                    <option value="dalam_lemari" {{ request('placement_type') == 'dalam_lemari' ? 'selected' : '' }}>Dalam Lemari</option>
+                </select>
+            </div>
+            <div>
                 <select name="condition" class="w-full rounded-lg border-gray-300 text-sm p-2 border">
                     <option value="">Semua Kondisi</option>
                     <option value="baik" {{ request('condition') == 'baik' ? 'selected' : '' }}>Baik</option>
                     <option value="rusak" {{ request('condition') == 'rusak' ? 'selected' : '' }}>Rusak</option>
                     <option value="hilang" {{ request('condition') == 'hilang' ? 'selected' : '' }}>Hilang</option>
+                    <option value="sebagian_rusak" {{ request('condition') == 'sebagian_rusak' ? 'selected' : '' }}>Sebagian Rusak</option>
                 </select>
             </div>
             <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition text-sm font-bold shadow-sm">Filter Monitoring</button>
@@ -70,44 +78,72 @@
 
     <!-- Items List -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
-                <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kode</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Barang</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kategori</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kondisi</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jumlah</th>
-                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Opsi</th>
-                </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
-                @forelse($items as $item)
-                    <tr class="hover:bg-gray-50 transition">
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-700 font-mono">{{ $item->code }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm font-bold text-gray-900">{{ $item->name }}</div>
-                            <div class="text-xs text-gray-500">{{ $item->location }}</div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $item->category }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="px-2.5 py-0.5 rounded-full text-xs font-bold border
-                                {{ $item->condition === 'baik' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : ($item->condition === 'rusak' ? 'bg-orange-50 text-orange-700 border-orange-200' : 'bg-red-50 text-red-700 border-red-200') }}">
-                                {{ strtoupper($item->condition) }}
-                            </span>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-bold">{{ $item->quantity }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
-                            <a href="{{ route('admin.items.show', $item->id) }}" class="px-3 py-1 bg-indigo-50 text-indigo-700 rounded-md hover:bg-indigo-100 transition font-medium">
-                                Detail Barang →
-                            </a>
-                        </td>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Barang</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kategori</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Penempatan</th>
+                        <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Jumlah</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kondisi</th>
+                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Opsi</th>
                     </tr>
-                @empty
-                    <tr><td colspan="6" class="px-6 py-10 text-center text-gray-500 italic">Data barang tidak ditemukan.</td></tr>
-                @endforelse
-            </tbody>
-        </table>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    @forelse($items as $item)
+                        <tr class="hover:bg-gray-50 transition">
+
+                            <td class="px-4 py-4 whitespace-nowrap">
+                                <div class="text-sm font-bold text-gray-900">{{ $item->name }}</div>
+                                <div class="text-xs text-gray-500">{{ $item->location }}</div>
+                            </td>
+                            <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{{ $item->category }}</td>
+                            <td class="px-4 py-4 whitespace-nowrap">
+                                @php
+                                    $placementColor = $item->placement_type === 'dalam_lemari' 
+                                        ? 'bg-purple-100 text-purple-800 border-purple-200' 
+                                        : 'bg-blue-100 text-blue-800 border-blue-200';
+                                @endphp
+                                <span class="px-2 py-0.5 rounded-full text-xs font-bold border {{ $placementColor }}">
+                                    {{ $item->placement_label }}
+                                </span>
+                            </td>
+                            <td class="px-4 py-4 whitespace-nowrap text-center">
+                                <div class="text-sm font-bold text-gray-900">{{ $item->quantity }}</div>
+                                <div class="text-xs text-gray-500">
+                                    @if($item->qty_baik > 0)<span class="text-emerald-600">{{ $item->qty_baik }}B</span>@endif
+                                    @if($item->qty_rusak > 0)<span class="text-orange-600 ml-1">{{ $item->qty_rusak }}R</span>@endif
+                                    @if($item->qty_hilang > 0)<span class="text-red-600 ml-1">{{ $item->qty_hilang }}H</span>@endif
+                                </div>
+                            </td>
+                            <td class="px-4 py-4 whitespace-nowrap">
+                                @php
+                                    $conditionColors = [
+                                        'baik' => 'bg-emerald-50 text-emerald-700 border-emerald-200',
+                                        'rusak' => 'bg-orange-50 text-orange-700 border-orange-200',
+                                        'hilang' => 'bg-red-50 text-red-700 border-red-200',
+                                        'sebagian_rusak' => 'bg-amber-50 text-amber-700 border-amber-200',
+                                    ];
+                                    $conditionLabel = $item->condition === 'sebagian_rusak' ? 'SEBAGIAN' : strtoupper($item->condition);
+                                @endphp
+                                <span class="px-2.5 py-0.5 rounded-full text-xs font-bold border {{ $conditionColors[$item->condition] ?? 'bg-gray-50 text-gray-700 border-gray-200' }}">
+                                    {{ $conditionLabel }}
+                                </span>
+                            </td>
+                            <td class="px-4 py-4 whitespace-nowrap text-right text-sm">
+                                <a href="{{ route('admin.items.show', $item->id) }}" class="px-3 py-1 bg-indigo-50 text-indigo-700 rounded-md hover:bg-indigo-100 transition font-medium">
+                                    Detail Barang →
+                                </a>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr><td colspan="7" class="px-6 py-10 text-center text-gray-500 italic">Data barang tidak ditemukan.</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
         <div class="p-4 border-t border-gray-100">
             {{ $items->withQueryString()->links() }}
         </div>
