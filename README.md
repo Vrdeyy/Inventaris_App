@@ -1,104 +1,109 @@
-# 📦 Sistem Informasi Inventaris Barang 
+# 📦 Sistem Informasi Inventaris Barang (SIVENT)
 
-Platform manajemen aset dan inventaris modern berbasis web yang dirancang khusus untuk instansi pendidikan atau perkantoran. Sistem ini mengedepankan **akurasi data per unit**, **audit riwayat transparan**, dan **laporan Excel profesional dengan nested headers**.
+Platform manajemen aset dan inventaris modern berbasis web yang dirancang untuk instansi pendidikan atau perkantoran. Sistem ini mengedepankan **akurasi data per unit**, **audit riwayat transparan**, dan **laporan Excel profesional** dengan fitur cerdas *automatic partitioning*.
 
 ---
 
 ## 🌟 Fitur Unggulan (Premium Features)
 
-### � Data Akurat (Condition Breakdown)
-Berbeda dengan sistem inventaris biasa, SIVENT memecah setiap item menjadi 3 kondisi sekaligus:
+### 📊 Akurasi Kondisi Bertingkat (Condition Breakdown)
+Sistem memecah setiap item menjadi 3 kondisi sekaligus secara real-time:
 - **Baik**: Barang siap digunakan.
 - **Rusak**: Barang ada namun tidak berfungsi.
 - **Hilang**: Barang tercatat namun fisik tidak ditemukan.
 Sistem secara otomatis menghitung status (**Baik, Rusak, Hilang, atau Sebagian Rusak**) berdasarkan distribusi jumlah tersebut.
 
-### 📑 Laporan Excel "Standard Audit"
-Export data menggunakan format **Nested Header** (Header Bertingkat) yang profesional:
-- **Warna Peach & Border Hitam**: Desain premium mengikuti standar laporan kantoran.
-- **Sub-Header Kondisi**: Kolom "Kondisi" membawahi sub-kolom "Baik", "Rusak", dan "Hilang".
-- **Multi-Sheet & Multi-Month**: Export ribuan data dalam hitungan detik dengan pemisahan sheet otomatis per bulan dan per penempatan (Dalam Ruang/Dalam Lemari).
+### 📑 Laporan Excel "Standard Audit" (Smart Exporter)
+Fitur export paling cerdas yang pernah ada dalam sistem inventaris:
+- **Nested Header**: Format laporan profesional dengan header bertingkat (Warna Peach & Border Hitam).
+- **Auto-Partitioning Sheets**: Jika export mencakup banyak petugas atau rentang bulan, sistem otomatis membagi data ke dalam sheet terpisah berdasarkan **Nama Petugas**, **Bulan**, dan **Jenis Penempatan** (Ruang/Lemari).
+- **Single File, Multi-Data**: Export "Semua Petugas" hanya menghasilkan satu file Excel rapi yang berisi seluruh database, mencegah blokir browser akibat multiple downloads.
 
 ### 👮 Audit Trail & Monitoring (Anti-Manipulasi)
-- **Lock-Total Validation**: Saat mengedit, user dilarang "mengada-ngada" jumlah barang. Total baru harus sama dengan stok awal yang tercatat.
-- **Mandatory Description**: Setiap perubahan data **wajib** disertai alasan (misal: "Rusak karena jatuh saat dipindahkan").
-- **Monitoring Petugas**: Admin dapat memantau aset secara spesifik per petugas dengan filter kategori dan penempatan yang detail.
+- **Lock-Total Validation**: Total barang terkunci saat pengeditan. User hanya bisa mengatur distribusi kondisi (Baik/Rusak/Hilang) tanpa bisa mengubah total stok sembarangan.
+- **Mandatory Audit Logs**: Setiap perubahan data **wajib** disertai alasan yang akan tercatat secara permanen dalam riwayat sistem.
+- **Detailed History viewer**: Admin dapat melihat kronologi perubahan barang lengkap dengan detail "Siapa, Kapan, Dari Mana ke Mana, dan Mengapa".
+
+### 🛠️ Maintenance & Data Safety
+- **Log Cleaning**: Bersihkan database dari log lama (Periodik atau Semua Sebelum Bulan tertentu).
+- **Atomic Archives**: Fitur "Download sebelum hapus" memastikan data ditarik 100% ke Excel dalam format rapi sebelum database dikosongkan.
+- **User Safeguard**: Admin tidak dapat menghapus akunnya sendiri, dan akun yang dihapus dapat dipulihkan kembali (Soft Delete & Restore).
 
 ---
 
-## 🛠️ Tech Stack (Tools yang Digunakan)
+## 🛠️ Tech Stack
 
-Sistem ini dibangun menggunakan teknologi mutakhir untuk memastikan kecepatan dan kemudahan pemeliharaan:
-
-| Tool | Kegunaan |
-|------|----------|
-| **Laravel 11** | Backend framework utama |
-| **PHP 8.3** | Versi PHP terbaru untuk performa maksimal |
-| **Tailwind CSS** | Framework UI untuk desain premium & responsif |
-| **PhpSpreadsheet** | Mesin pembuat laporan Excel (.xlsx) |
-| **MySQL / MariaDB** | Penyimpanan database relasional |
-| **Laragon** | Rekomendasi server lokal (Development environment) |
+Sistem ini dibangun dengan arsitektur yang ringan namun powerful:
+- **Laravel 11**: Backend framework utama dengan sistem routing dan middleware yang aman.
+- **Tailwind CSS**: Desain UI premium, bersih, dan sepenuhnya responsif (Mobile Friendly).
+- **Alpine.js**: Interaktivitas frontend yang ringan untuk pengalaman pengguna yang mulus.
+- **PhpSpreadsheet**: Engine kustom untuk pembuatan laporan Excel kompleks dengan nested headers.
+- **MySQL / MariaDB**: Database relasional untuk integritas data yang tinggi.
 
 ---
 
-## 🔄 Alur Penggunaan (System Flow)
+## 🔄 Alur Kerja Sistem (System Flow)
 
-### 1. Peran Petugas (User)
-1. **Tambah Barang**: Input Nama, Kategori, Lokasi, dan pilih Penempatan (Ruang/Lemari).
-2. **Breakdown Jumlah**: Masukkan jumlah barang dan bagi ke dalam kategori Baik, Rusak, atau Hilang.
-3. **Kelola & Update**: Jika kondisi barang berubah, edit data dan berikan **Catatan Perubahan**. Sistem akan memvalidasi agar total barang tidak berubah tiba-tiba.
+### 1. Skenario Petugas (User)
+1. **Input Barang**: Mendaftarkan barang baru dengan memilih kategori dan jenis penempatan (Ruang/Lemari).
+2. **Setup Kondisi**: Memasukkan jumlah awal barang dan membaginya ke kondisi Baik/Rusak/Hilang.
+3. **Update Data**: Melaporkan perubahan kondisi (misal: "1 unit rusak karena jatuh"). Sistem memvalidasi agar total barang tidak berubah secara ilegal.
 
-### 2. Peran Admin
-1. **Monitoring**: Lihat sebaran aset di seluruh petugas. Bisa difilter berdasarkan penempatan atau kondisi spesifik.
-2. **Cek Riwayat**: Lihat kronologi barang dari pertama diinput hingga perubahan terakhir (siapa yang mengubah, kapan, dan alasannya).
-3. **Laporan Bulanan**: Export laporan aset dalam bentuk folder bulanan (sheet per bulan) untuk arsip instansi.
-4. **Maintenance**: Lakukan pembersihan log atau reset data tahun ajaran baru dengan fitur pengamanan kata kunci "RESET".
+### 2. Skenario Admin
+1. **Monitoring Global**: Memantau seluruh aset secara transparan per petugas.
+2. **Pusat Laporan**: Menghasilkan laporan bulanan atau semesteran pet petugas atau seluruh petugas dalam satu file Excel terorganisir.
+3. **Kelola Petugas**: Menambah, menonaktifkan, atau memulihkan akun petugas.
+4. **Pemeliharaan**: Melakukan reset data aset untuk tahun ajaran baru atau membersihkan log riwayat agar aplikasi tetap ringan.
 
 ---
 
 ## ⚙️ Panduan Instalasi (Setup Guide)
 
-Pastikan Anda mengikuti langkah ini agar aplikasi berjalan lancar:
+Ikuti langkah berikut untuk menjalankan sistem di lingkungan lokal (Laragon/XAMPP):
 
 ### 1. Persiapan Environment
-Paling mudah gunakan **Laragon**. Pastikan versi PHP sudah **8.3**.
+- **PHP**: Minimal versi 8.2 (Direkomendasikan 8.3)
+- **Composer**: Versi terbaru
+- **Node.js & NPM**: Untuk kompilasi aset CSS/JS
 
-### 2. Clone & Install
-Buka terminal di folder `laragon/www/` dan jalankan:
+### 2. Instalasi Project
 ```bash
 # Clone project
 git clone https://github.com/Vrdeyy/Inventaris_App.git
 cd Inventaris_App
 
-# Install Dependensi
+# Install dependensi PHP & JavaScript
 composer install
 npm install
 ```
 
-### 3. Konfigurasi Database
-1. Buat database baru di MySQL (misal nama: `db_inventaris`).
-2. Copy file `.env.example` menjadi `.env`.
-3. Sesuaikan `DB_DATABASE`, `DB_USERNAME`, dan `DB_PASSWORD` di file `.env`.
+### 3. Konfigurasi
+1. Buat database baru di MySQL (misal: `inventaris_db`).
+2. Copy `.env.example` menjadi `.env`.
+3. Update bagian database di `.env`:
+   ```env
+   DB_DATABASE=inventaris_db
+   DB_USERNAME=root
+   DB_PASSWORD=
+   ```
+4. Jalankan perintah: `php artisan key:generate`
 
-### 4. Setup Database & Data Dummy
-Jalankan perintah sakti ini untuk me-reset database dan mengisi data simulasi (Mei-Desember 2025):
+### 4. Setup Database (Sangat Penting)
+Gunakan perintah seeder untuk mendapatkan data simulasi lengkap (Mei 2025 - Desember 2025):
 ```bash
 php artisan migrate:fresh --seed
 ```
 
 ### 5. Jalankan Aplikasi
-```bash
-# Terminal 1
-php artisan serve
+Buka dua terminal terpisah:
+- **Terminal 1**: `php artisan serve`
+- **Terminal 2**: `npm run dev`
 
-# Terminal 2
-npm run dev
-```
-Akses: `http://localhost:8000`
+Akses aplikasi di: `http://localhost:8000`
 
 ---
 
-## 🔑 Akun Login Default
+## 🔑 Akun Akses Default
 
 | Role | Email | Password |
 |------|-------|----------|
@@ -108,9 +113,12 @@ Akses: `http://localhost:8000`
 
 ---
 
-## 📂 Custom Template Excel
-Admin bisa mengganti tampilan Excel di menu **Setting Template**. 
-Sistem akan membaca header dari template tersebut mulai dari **baris 5 dan 6** untuk daftar barang.
+## 📂 Lokasi Template Excel
+Anda dapat menyesuaikan tampilan laporan Excel melalui file template yang berlokasi di:
+`storage/app/templates/template_items.xlsx` (Daftar Barang)
+`storage/app/templates/template_history.xlsx` (Riwayat)
+
+*Sistem akan membaca header dari baris 5 & 6 secara otomatis.*
 
 ---
 © 2026 **Vrdeyy** | Built with ❤️ for Better Asset Management.
