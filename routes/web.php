@@ -25,6 +25,7 @@ Route::post('logout', [AuthController::class, 'logout'])->name('logout');
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('dashboard', [AdminDashboardController::class, 'dashboard'])->name('dashboard');
     Route::get('users/{user}/export', [ItemController::class, 'exportUserItems'])->name('users.export_items');
+    Route::post('users/{user}/restore', [AdminUserController::class, 'restore'])->name('users.restore');
     Route::resource('users', AdminUserController::class);
 
 

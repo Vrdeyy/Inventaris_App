@@ -92,11 +92,9 @@ class ItemHistoryController extends Controller
         $selectedYear = $request->input('year') ?: Carbon::now()->year;
         $startMonth = $request->input('start_month');
         $endMonth = $request->input('end_month');
-        $isRange = ($startMonth && $endMonth && $startMonth != $endMonth);
+        $isRange = ($startMonth && $endMonth && $startMonth <= $endMonth);
 
-        if ($date = $request->input('date')) {
-            $query->whereDate('created_at', $date);
-        } elseif ($isRange) {
+        if ($isRange) {
             $startDate = Carbon::create($selectedYear, $startMonth, 1)->startOfDay();
             $endDate = Carbon::create($selectedYear, $endMonth, 1)->endOfMonth()->endOfDay();
             $query->whereBetween('created_at', [$startDate, $endDate]);
@@ -131,7 +129,7 @@ class ItemHistoryController extends Controller
         $endMonth = $request->input('end_month');
 
         // Check if multi-month export is needed
-        if ($startMonth && $endMonth && $startMonth != $endMonth) {
+        if ($startMonth && $endMonth && $startMonth <= $endMonth) {
             return $this->exportMultiMonthHistory($logs, $startMonth, $endMonth, $selectedYear, $userInfo);
         }
 
@@ -214,6 +212,17 @@ class ItemHistoryController extends Controller
         if ($hasTemplate && file_exists($templatePath) && class_exists(IOFactory::class)) {
             // Load Template
             $spreadsheet = IOFactory::load($templatePath);
+
+            // FIX: Hapus semua sheet bawaan template kecuali yang sedang aktif
+            // Ini mencegah munculnya "sheet bulan lain" jika template memiliki banyak sheet
+            $activeSheetIndex = $spreadsheet->getActiveSheetIndex();
+            $sheetCount = $spreadsheet->getSheetCount();
+            for ($i = $sheetCount - 1; $i >= 0; $i--) {
+                if ($i !== $activeSheetIndex) {
+                    $spreadsheet->removeSheetByIndex($i);
+                }
+            }
+
             $sheet = $spreadsheet->getActiveSheet();
 
             // Rename sheet if month is provided

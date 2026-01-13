@@ -84,13 +84,40 @@ class UserController extends Controller
 
     public function destroy($id)
     {
-        $user = User::withTrashed()->findOrFail($id);
-        if ($user->trashed()) {
-            $user->forceDelete();
-        } else {
-            $user->delete();
+        if ($id == auth()->id()) {
+            return redirect()->route('admin.users.index')->with('error', 'Anda tidak dapat menghapus akun sendiri.');
         }
 
-        return redirect()->route('admin.users.index')->with('success', 'User berhasil dihapus/nonaktifkan.');
+        $user = User::withTrashed()->findOrFail($id);
+
+        if ($user->trashed()) {
+            // Use database transaction for safety
+            \Illuminate\Support\Facades\DB::transaction(function () use ($user) {
+                // 1. Delete all logs WHERE this user was the person who made the change
+                \App\Models\ItemLog::where('user_id', $user->id)->delete();
+
+                // 2. Delete all items belonging to this user
+                // Logs for these items will be automatically deleted because of onDelete('cascade') in migration
+                \App\Models\Item::where('user_id', $user->id)->forceDelete();
+
+                // 3. Finally, force delete the user
+                $user->forceDelete();
+            });
+            $message = 'User dan seluruh data terkait berhasil dihapus secara permanen.';
+        } else {
+            $user->delete();
+            $message = 'User berhasil dinonaktifkan (Soft Delete).';
+        }
+
+        return redirect()->route('admin.users.index')->with('success', $message);
+    }
+
+    public function restore($id)
+    {
+        $user = User::withTrashed()->findOrFail($id);
+        $user->restore();
+        $user->update(['is_active' => true]);
+
+        return redirect()->route('admin.users.index')->with('success', 'User berhasil diaktifkan kembali.');
     }
 }

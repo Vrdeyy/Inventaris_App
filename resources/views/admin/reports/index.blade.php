@@ -42,6 +42,8 @@
                         </select>
                     </div>
 
+
+
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-semibold text-gray-700 mb-1">Kondisi</label>
@@ -72,13 +74,6 @@
                         </label>
                         
                         <div class="space-y-3">
-                            <!-- Per Hari -->
-                            <div>
-                                <label class="text-xs text-gray-500 mb-1 block">Per Tanggal (opsional):</label>
-                                <input type="date" name="date"
-                                    class="w-full rounded-lg border-gray-200 focus:ring-emerald-500 focus:border-emerald-500 text-sm p-2 border">
-                            </div>
-                            
                             <!-- Per Bulan/Tahun -->
                             <div class="grid grid-cols-2 gap-3">
                                 <div>
@@ -166,6 +161,8 @@
                         </select>
                     </div>
 
+
+
                     <!-- Date Filter for Admin -->
                     <div class="p-4 bg-gray-50 rounded-xl">
                         <label class="block text-sm font-semibold text-gray-700 mb-3">
@@ -178,13 +175,6 @@
                         </label>
                         
                         <div class="space-y-3">
-                            <!-- Per Hari -->
-                            <div>
-                                <label class="text-xs text-gray-500 mb-1 block">Per Tanggal (opsional):</label>
-                                <input type="date" name="date"
-                                    class="w-full rounded-lg border-gray-200 focus:ring-indigo-500 focus:border-indigo-500 text-sm p-2 border">
-                            </div>
-                            
                             <!-- Per Bulan/Tahun -->
                             <div class="grid grid-cols-2 gap-3">
                                 <div>
@@ -266,4 +256,67 @@
             </div>
         </div>
     </div>
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('form').forEach(form => {
+        form.addEventListener('submit', function(e) {
+            const userIdSelect = this.querySelector('select[name="user_id"]');
+            
+            if (userIdSelect && userIdSelect.value === 'all') {
+                e.preventDefault();
+                
+                const userOptions = Array.from(userIdSelect.options)
+                    .filter(opt => opt.value && opt.value !== 'all');
+                
+                if (userOptions.length === 0) {
+                    alert('Tidak ada petugas untuk diexport.');
+                    return;
+                }
+
+                if (!confirm(`Sistem akan mendownload ${userOptions.length} file laporan (terpisah per petugas). Lanjutkan?`)) {
+                    return;
+                }
+
+                // Get absolute base URL
+                // Use getAttribute('action') because this.action might refer to the input named 'action'
+                const actionAttr = this.getAttribute('action');
+                const actionUrl = new URL(actionAttr, window.location.origin);
+                const formData = new FormData(this);
+                
+                userOptions.forEach((opt, index) => {
+                    setTimeout(() => {
+                        const url = new URL(actionUrl.toString());
+                        
+                        // Copy all current form data to URL search params
+                        for (let [key, value] of formData.entries()) {
+                            if (key !== 'user_id' && typeof value === 'string') {
+                                url.searchParams.set(key, value);
+                            }
+                        }
+                        
+                        // Set specific user_id for this download
+                        url.searchParams.set('user_id', opt.value);
+                        
+                        // Trigger download by opening in a new tab/window or using a dynamic link
+                        const downloadUrl = url.toString();
+                        const win = window.open(downloadUrl, '_blank');
+                        
+                        // If window.open is blocked, fallback to link click
+                        if (!win || win.closed || typeof win.closed === 'undefined') {
+                            const link = document.createElement('a');
+                            link.href = downloadUrl;
+                            link.style.display = 'none';
+                            document.body.appendChild(link);
+                            link.click();
+                            setTimeout(() => document.body.removeChild(link), 100);
+                        }
+                    }, index * 1200); // 1.2s interval to be extra safe
+                });
+            }
+        });
+    });
+});
+</script>
+@endpush
 @endsection

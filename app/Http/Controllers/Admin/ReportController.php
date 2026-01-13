@@ -51,9 +51,7 @@ class ReportController extends Controller
                 $query->where('user_id', $user->id);
             }
 
-            if ($date = $request->input('date')) {
-                $query->whereDate('created_at', $date);
-            }
+
             if ($month = $request->input('month')) {
                 $query->whereMonth('created_at', $month);
             }

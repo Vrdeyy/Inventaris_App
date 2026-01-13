@@ -39,20 +39,35 @@
                             @endif
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <a href="{{ route('admin.users.export_items', $user->id) }}"
-                                class="text-green-600 hover:text-green-900 mr-3">Export Items</a>
-                            <a href="{{ route('admin.users.edit', $user->id) }}"
-                                class="text-indigo-600 hover:text-indigo-900 mr-3">Edit</a>
-                            <form action="{{ route('admin.users.destroy', $user->id) }}" method="POST" class="inline-block"
-                                onsubmit="return confirm('Nonaktifkan user ini?');">
-                                @csrf
-                                @method('DELETE')
+
+
+                            @if(!$user->trashed())
+                                <a href="{{ route('admin.users.edit', $user->id) }}"
+                                    class="text-indigo-600 hover:text-indigo-900 mr-3">Edit</a>
+                            @endif
+
+                            @if($user->id !== auth()->id())
+                                <form action="{{ route('admin.users.destroy', $user->id) }}" method="POST" class="inline-block"
+                                    onsubmit="return confirm('{{ $user->trashed() ? 'Hapus permanen user ini?' : 'Nonaktifkan user ini?' }}');">
+                                    @csrf
+                                    @method('DELETE')
+                                    @if($user->trashed())
+                                        <button type="submit" class="text-red-600 hover:text-red-900 font-bold text-xs uppercase underline">Delete Permanently</button>
+                                    @else
+                                        <button type="submit" class="text-amber-600 hover:text-amber-900">Deactivate</button>
+                                    @endif
+                                </form>
+
                                 @if($user->trashed())
-                                    <span class="text-gray-400 cursor-not-allowed">Disabled</span>
-                                @else
-                                    <button type="submit" class="text-red-600 hover:text-red-900">Disable</button>
+                                    <form action="{{ route('admin.users.restore', $user->id) }}" method="POST" class="inline-block"
+                                          onsubmit="return confirm('Aktifkan kembali user ini?');">
+                                        @csrf
+                                        <button type="submit" class="ml-3 text-emerald-600 hover:text-emerald-900">Restore</button>
+                                    </form>
                                 @endif
-                            </form>
+                            @else
+                                <span class="text-gray-400 italic">Akun Anda</span>
+                            @endif
                         </td>
                     </tr>
                 @endforeach

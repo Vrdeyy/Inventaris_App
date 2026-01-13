@@ -231,18 +231,21 @@ class ItemController extends Controller
     {
         $user = Auth::user();
 
-        // User cetak semua data barang yang mereka miliki hingga saat ini
-        $endOfMonth = Carbon::now()->endOfMonth();
+        // Admin ingin petugas hanya bisa cetak data barang BULAN BERJALAN saja (Snapshot Inventory)
+        $month = Carbon::now()->month;
+        $year = Carbon::now()->year;
 
+        // Ambil data barang yang ada hingga akhir bulan ini
+        $endOfMonth = Carbon::now()->endOfMonth();
         $items = Item::where('user_id', $user->id)
             ->where('created_at', '<=', $endOfMonth)
             ->get();
 
-        $monthName = $this->getIndonesianMonth(Carbon::now()->month);
-        $year = Carbon::now()->year;
-        $filename = "daftar-barang-{$monthName}-{$year}.xlsx";
+        $userInfo = preg_replace('/[^A-Za-z0-9\-]/', '', str_replace(' ', '-', $user->name));
 
-        return $this->generateExcelFromTemplate($items, $filename, 'items', $monthName, $year);
+        // Gunakan exportMultiMonthItems agar hasilnya bersih (hanya sheet bulan ini)
+        // dan mendapatkan fitur split per penempatan (Dalam Ruang/Lemari)
+        return $this->exportMultiMonthItems($items, $month, $month, $year, $userInfo);
     }
 
     /**
@@ -260,14 +263,12 @@ class ItemController extends Controller
         $startMonth = $request->input('start_month');
         $endMonth = $request->input('end_month');
         $selectedYear = $request->input('year') ?: Carbon::now()->year;
-        $isRange = ($startMonth && $endMonth && $startMonth != $endMonth);
+        $isRange = ($startMonth && $endMonth && $startMonth <= $endMonth);
 
         // Tentukan batas akhir tanggal untuk filter
         $endDate = Carbon::now()->endOfMonth();
 
-        if ($date = $request->input('date')) {
-            $endDate = Carbon::parse($date)->endOfDay();
-        } elseif ($endMonth) {
+        if ($endMonth) {
             $endDate = Carbon::create($selectedYear, $endMonth, 1)->endOfMonth()->endOfDay();
         } elseif ($month = $request->input('month') ?: $startMonth) {
             $endDate = Carbon::create($selectedYear, $month, 1)->endOfMonth()->endOfDay();
@@ -300,7 +301,7 @@ class ItemController extends Controller
         }
 
         // Check if multi-month export is needed
-        if ($startMonth && $endMonth && $startMonth != $endMonth) {
+        if ($startMonth && $endMonth && $startMonth <= $endMonth) {
             return $this->exportMultiMonthItems($items, $startMonth, $endMonth, $selectedYear, $userInfo);
         }
 
@@ -373,7 +374,12 @@ class ItemController extends Controller
         }
 
         $spreadsheet->setActiveSheetIndex(0);
-        $filename = "daftar-barang-{$userInfo}-{$this->getIndonesianMonth($startMonth)}-{$this->getIndonesianMonth($endMonth)}-{$year}.xlsx";
+
+        $monthRange = ($startMonth == $endMonth)
+            ? $this->getIndonesianMonth($startMonth)
+            : $this->getIndonesianMonth($startMonth) . '-' . $this->getIndonesianMonth($endMonth);
+
+        $filename = "daftar-barang-{$userInfo}-{$monthRange}-{$year}.xlsx";
 
         return $this->outputExcel($spreadsheet, $filename);
     }
@@ -393,6 +399,17 @@ class ItemController extends Controller
         if ($hasTemplate && file_exists($templatePath) && class_exists(IOFactory::class)) {
             // Load Template
             $spreadsheet = IOFactory::load($templatePath);
+
+            // FIX: Hapus semua sheet bawaan template kecuali yang sedang aktif
+            // Ini mencegah munculnya "sheet bulan lain" jika template memiliki banyak sheet
+            $activeSheetIndex = $spreadsheet->getActiveSheetIndex();
+            $sheetCount = $spreadsheet->getSheetCount();
+            for ($i = $sheetCount - 1; $i >= 0; $i--) {
+                if ($i !== $activeSheetIndex) {
+                    $spreadsheet->removeSheetByIndex($i);
+                }
+            }
+
             $sheet = $spreadsheet->getActiveSheet();
 
             // Rename sheet if month is provided
