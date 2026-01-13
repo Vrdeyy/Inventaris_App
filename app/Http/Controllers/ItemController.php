@@ -252,66 +252,52 @@ class ItemController extends Controller
      * Export Items for Admin (supports day, month, year filtering)
      * When spanning multiple months, each month gets its own sheet
      */
-    public function exportItems(Request $request)
+    public function exportItems(Request $request, $preFetchedItems = null)
     {
-        $query = Item::with('user');
-        if ($userId = $request->input('user_id')) {
-            if ($userId !== 'all') {
+        // 1. Setup Dates & Range
+        $currentMonth = Carbon::now()->month;
+        $startMonth = $request->input('start_month') ?: $currentMonth;
+        $endMonth = $request->input('end_month') ?: $currentMonth;
+        $selectedYear = $request->input('year') ?: Carbon::now()->year;
+
+        // 2. Determine Data Source
+        if ($preFetchedItems) {
+            $items = $preFetchedItems;
+        } else {
+            $query = Item::with('user');
+
+            // Handle both 'user_id' (Report Center) and 'target_user' (Maintenance)
+            $userId = $request->input('user_id') ?: $request->input('target_user');
+            if ($userId && $userId !== 'all') {
                 $query->where('user_id', $userId);
             }
-        }
-        $startMonth = $request->input('start_month');
-        $endMonth = $request->input('end_month');
-        $selectedYear = $request->input('year') ?: Carbon::now()->year;
-        $isRange = ($startMonth && $endMonth && $startMonth <= $endMonth);
 
-        // Tentukan batas akhir tanggal untuk filter
-        $endDate = Carbon::now()->endOfMonth();
-
-        if ($endMonth) {
+            // Calculate Date Boundary
             $endDate = Carbon::create($selectedYear, $endMonth, 1)->endOfMonth()->endOfDay();
-        } elseif ($month = $request->input('month') ?: $startMonth) {
-            $endDate = Carbon::create($selectedYear, $month, 1)->endOfMonth()->endOfDay();
+            $query->where('created_at', '<=', $endDate);
+
+            if ($condition = $request->input('condition')) {
+                $query->where('condition', $condition);
+            }
+            if ($category = $request->input('category')) {
+                $query->where('category', $category);
+            }
+
+            $items = $query->get();
         }
 
-        // Ambil SEMUA BARANG yang dibuat "sebelum atau tepat pada" tanggal batas akhir
-        // Ini memastikan barang lama tetap muncul (akumulatif/inventory snapshot)
-        $query->where('created_at', '<=', $endDate);
-
-        if ($condition = $request->input('condition')) {
-            $query->where('condition', $condition);
-        }
-        if ($category = $request->input('category')) {
-            $query->where('category', $category);
-        }
-
-        $items = $query->get();
-
-        // Determine if we need multiple sheets (more than 1 month range)
-        $startMonth = $request->input('start_month');
-        $endMonth = $request->input('end_month');
-        $selectedYear = $request->input('year') ?: Carbon::now()->year;
-
-        // Username info for filename
+        // 3. User Info for Filename
         $userInfo = 'Semua-Petugas';
-        if ($uid = $request->input('user_id')) {
-            if ($u = User::find($uid)) {
-                $userInfo = preg_replace('/[^A-Za-z0-9\-]/', '', str_replace(' ', '-', $u->name));
+        $uid = $request->input('user_id') ?: $request->input('target_user');
+        if ($uid && $uid !== 'all') {
+            if ($user = User::find($uid)) {
+                $userInfo = preg_replace('/[^A-Za-z0-9\-]/', '', str_replace(' ', '-', $user->name));
             }
         }
 
-        // Check if multi-month export is needed
-        if ($startMonth && $endMonth && $startMonth <= $endMonth) {
-            return $this->exportMultiMonthItems($items, $startMonth, $endMonth, $selectedYear, $userInfo);
-        }
-
-        // Single month/period export
-        $month = $request->input('month') ?: $startMonth;
-        $year = $request->input('year') ?: $selectedYear;
-        $periodInfo = ($month ? $this->getIndonesianMonth($month) : 'Semua') . '-' . ($year ?: 'Semua');
-        $filename = "daftar-barang-{$userInfo}-{$periodInfo}.xlsx";
-
-        return $this->generateExcelFromTemplate($items, $filename, 'items', $month ? $this->getIndonesianMonth($month) : null, $year);
+        // 4. Always use multi-month logic (supports splitting by placement: Ruang/Lemari)
+        // This also handles renamed sheets correctly.
+        return $this->exportMultiMonthItems($items, $startMonth, $endMonth, $selectedYear, $userInfo);
     }
 
     /**
@@ -337,49 +323,78 @@ class ItemController extends Controller
 
         $placementTypes = ['dalam_ruang' => 'Dalam Ruang', 'dalam_lemari' => 'Dalam Lemari'];
 
+        // Determine if we need to split by User (for Mass Resets)
+        $usersFound = $allItems->pluck('user.name')->unique();
+        $isMultiUser = $usersFound->count() > 1;
+
         for ($m = $startMonth; $m <= $endMonth; $m++) {
             $monthName = $this->getIndonesianMonth($m);
-
-            // Akumulatif: Ambil barang yang dibuat sebelum atau pada akhir bulan ini
             $monthEnd = Carbon::create($year, $m, 1)->endOfMonth()->endOfDay();
             $monthItems = $allItems->filter(function ($item) use ($monthEnd) {
                 return $item->created_at <= $monthEnd;
             });
 
-            // Create 2 sheets per month: one for each placement type
-            foreach ($placementTypes as $placementKey => $placementLabel) {
-                $placementItems = $monthItems->where('placement_type', $placementKey);
+            if ($isMultiUser) {
+                // PARTISI PER USER
+                $itemsByUser = $monthItems->groupBy('user_id');
+                foreach ($itemsByUser as $uid => $userItems) {
+                    $u = $userItems->first()->user;
+                    $shortUserName = substr($u->name, 0, 10);
 
-                // Create new sheet
-                $sheet = $spreadsheet->createSheet();
-                $sheetTitle = substr($monthName, 0, 15) . ' - ' . substr($placementLabel, 0, 12);
-                $sheet->setTitle($sheetTitle);
+                    foreach ($placementTypes as $placementKey => $placementLabel) {
+                        $pItems = $userItems->where('placement_type', $placementKey);
+                        if ($pItems->count() === 0)
+                            continue;
 
-                // Copy from template or create default header
-                if ($templateSpreadsheet) {
-                    $this->copyTemplateToSheet($templateSpreadsheet->getActiveSheet(), $sheet);
-                } else {
-                    $this->createDefaultItemsHeader($sheet, $monthName . ' - ' . $placementLabel, $year);
+                        $sheet = $spreadsheet->createSheet();
+                        $sheetTitle = substr($shortUserName . ' - ' . $placementLabel, 0, 31);
+                        $sheet->setTitle($sheetTitle);
+
+                        if ($templateSpreadsheet) {
+                            $this->copyTemplateToSheet($templateSpreadsheet->getActiveSheet(), $sheet);
+                            $title = strtoupper($u->name) . ' - ' . strtoupper($monthName) . ' ' . $year;
+                            $sheet->setCellValue('A1', $title);
+                            $sheet->setCellValue('A2', "Periode: " . $monthName . " " . $year);
+                        } else {
+                            $this->createDefaultItemsHeader($sheet, $monthName . ' (' . $u->name . ')', $year);
+                        }
+                        $this->fillItemsData($sheet, $pItems, 7);
+                        $lastRow = 6 + $pItems->count();
+                        if ($pItems->count() > 0)
+                            $this->applyDataStyles($sheet, 7, $lastRow, 'A', 'H');
+                    }
                 }
+            } else {
+                // STANDAR PER BULAN
+                foreach ($placementTypes as $placementKey => $placementLabel) {
+                    $placementItems = $monthItems->where('placement_type', $placementKey);
+                    $sheet = $spreadsheet->createSheet();
+                    $sheetTitle = substr($monthName . ' - ' . $placementLabel, 0, 31);
+                    $sheet->setTitle($sheetTitle);
 
-                // Fill data starting from row 7 (karena header 2 baris: 5 & 6)
-                $this->fillItemsData($sheet, $placementItems, 7);
-
-                // Apply styling to data rows
-                $lastRow = 6 + $placementItems->count();
-                if ($placementItems->count() > 0) {
-                    $this->applyDataStyles($sheet, 7, $lastRow, 'A', 'H');
+                    if ($templateSpreadsheet) {
+                        $this->copyTemplateToSheet($templateSpreadsheet->getActiveSheet(), $sheet);
+                        $title = 'DAFTAR INVENTARIS BARANG - ' . strtoupper($monthName) . ' ' . $year;
+                        $sheet->setCellValue('A1', $title);
+                        $sheet->setCellValue('A2', "Periode: " . $monthName . " " . $year);
+                    } else {
+                        $this->createDefaultItemsHeader($sheet, $monthName, $year);
+                    }
+                    $this->fillItemsData($sheet, $placementItems, 7);
+                    $lastRow = 6 + $placementItems->count();
+                    if ($placementItems->count() > 0)
+                        $this->applyDataStyles($sheet, 7, $lastRow, 'A', 'H');
                 }
             }
         }
 
+        if ($spreadsheet->getSheetCount() === 0) {
+            $spreadsheet->createSheet()->setTitle('Data Kosong');
+        }
+
         $spreadsheet->setActiveSheetIndex(0);
-
-        $monthRange = ($startMonth == $endMonth)
-            ? $this->getIndonesianMonth($startMonth)
-            : $this->getIndonesianMonth($startMonth) . '-' . $this->getIndonesianMonth($endMonth);
-
-        $filename = "daftar-barang-{$userInfo}-{$monthRange}-{$year}.xlsx";
+        $monthRange = ($startMonth == $endMonth) ? $this->getIndonesianMonth($startMonth) : $this->getIndonesianMonth($startMonth) . '-' . $this->getIndonesianMonth($endMonth);
+        $filename = "arsip-barang-{$userInfo}-{$monthRange}-{$year}.xlsx";
 
         return $this->outputExcel($spreadsheet, $filename);
     }
@@ -471,17 +486,29 @@ class ItemController extends Controller
     {
         // Title (Baris 1)
         $sheet->mergeCells('A1:H1');
-        $sheet->setCellValue('A1', 'Inventaris Barang - Barang Laboratorium');
+        $title = 'DAFTAR INVENTARIS BARANG' . ($month ? ' - ' . strtoupper($month) : '') . ($year ? ' ' . $year : '');
+        $sheet->setCellValue('A1', $title);
         $sheet->getStyle('A1')->applyFromArray([
             'font' => ['bold' => true, 'size' => 14],
             'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
         ]);
         $sheet->getRowDimension(1)->setRowHeight(25);
 
-        // Baris 2, 3, 4 dikosongkan agar ada jarak sesuai template
-        $sheet->getRowDimension(2)->setRowHeight(15);
-        $sheet->getRowDimension(3)->setRowHeight(15);
-        $sheet->getRowDimension(4)->setRowHeight(10);
+        // Periode (Baris 2)
+        $sheet->mergeCells('A2:H2');
+        if ($month && $year) {
+            $sheet->setCellValue('A2', "Periode: " . $month . " " . $year);
+        } else {
+            $sheet->setCellValue('A2', "Laporan Status Barang Terbaru");
+        }
+        $sheet->getStyle('A2')->applyFromArray([
+            'font' => ['italic' => true, 'size' => 10],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
+        ]);
+        $sheet->getRowDimension(2)->setRowHeight(20);
+
+        // Baris 3, 4 dikosongkan agar ada jarak sesuai template
+        $sheet->getRowDimension(3)->setRowHeight(10);
 
         // Header Row 5 & 6 (Nested) - Label dibuat LOWERCASE sesuai template
         $headers = [

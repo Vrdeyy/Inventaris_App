@@ -46,28 +46,18 @@ class MaintenanceController extends Controller
         $year = $request->input('year');
 
         if ($mode === 'archive_all') {
-            // 1. Export All to Excel First
+            // 1. Fetch data for archive
             $logs = ItemLog::with(['item', 'user'])->oldest('created_at')->get();
 
             if ($logs->count() === 0) {
                 return back()->with('error', 'Tidak ada riwayat untuk diarsipkan.');
             }
 
-            // Gunakan ItemHistoryController untuk generate excel
-            $filename = "ARSIP-TOTAL-RIWAYAT-" . now()->format('Y-m-d') . ".xlsx";
-
-            // Simpan data ke session atau storage sementara jika perlu, 
-            // tapi karena kita ingin langsung hapus setelah export, 
-            // kita lakukan penghapusan DI DALAM proses output seolah-olah transaksional.
-            // Namun karena PHP output menghalangi kode selanjutnya, kita hapus database DULU baru return download.
-
-            // LAKUKAN EXCEL GENERATION TAPI JANGAN EXIT DULU
-            // Untuk pembersihan total, kita hapus semua record
+            // 2. Clear Database
             ItemLog::truncate();
 
-            // Nota: Sebenarnya idealnya export dulu baru hapus. 
-            // Tapi untuk UX yang simpel, kita anggap Admin sudah export manual atau kita jalankan exportHistory.
-            return app(ItemHistoryController::class)->exportHistory($request->merge(['user_id' => 'all', 'year' => null]));
+            // 3. Export the fetched data
+            return app(ItemHistoryController::class)->exportHistory($request, $logs);
         }
 
         $query = ItemLog::query();
@@ -79,6 +69,23 @@ class MaintenanceController extends Controller
             $date = Carbon::create($year, $month, 1)->startOfMonth();
             $query->where('created_at', '<', $date);
             $msg = "Semua riwayat sebelum " . $date->format('M Y') . " berhasil dihapus.";
+        }
+
+        $withArchive = $request->has('archive');
+        if ($withArchive) {
+            // Fetch before delete
+            $logs = (clone $query)->with(['item', 'user'])->get();
+
+            if ($logs->count() === 0) {
+                return back()->with('error', 'Tidak ada data riwayat yang cocok dengan filter untuk diarsipkan.');
+            }
+
+            // Delete
+            $count = $query->count();
+            $query->delete();
+
+            // Export the logs we pre-fetched (The exporter will auto-split sheets)
+            return app(ItemHistoryController::class)->exportHistory($request, $logs);
         }
 
         $count = $query->count();
@@ -95,7 +102,6 @@ class MaintenanceController extends Controller
         $target = $request->input('target_user'); // 'all' or user_id
         $withArchive = $request->has('archive');
 
-        // Simpan info user untuk pesan sukses jika diarahkan balik
         $userName = 'Semua Petugas';
         if ($target !== 'all') {
             $user = User::findOrFail($target);
@@ -103,16 +109,26 @@ class MaintenanceController extends Controller
         }
 
         if ($withArchive) {
-            // Lakukan penghapusan secara force sebelum export dikirim ke browser
-            // Karena setelah exportHeader dikirim, script akan berhenti.
+            // 1. Fetch items while they still exist
+            $itemQuery = Item::with('user');
+            if ($target !== 'all') {
+                $itemQuery->where('user_id', $target);
+            }
+            $items = $itemQuery->get();
+
+            if ($items->count() === 0) {
+                return back()->with('error', "Tidak ada data barang untuk diarsipkan ({$userName}).");
+            }
+
+            // 2. Delete from DB
             if ($target === 'all') {
                 Item::query()->forceDelete();
             } else {
                 Item::where('user_id', $target)->forceDelete();
             }
 
-            // Redirect ke exportItems. Kita kirimkan parameter yang sama.
-            return app(ItemController::class)->exportItems($request->merge(['user_id' => $target]));
+            // 3. Export pre-fetched items
+            return app(ItemController::class)->exportItems($request, $items);
         }
 
         // Jika tidak ada arsip, hanya hapus dan redirect balik

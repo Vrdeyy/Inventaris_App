@@ -80,39 +80,44 @@ class ItemHistoryController extends Controller
      * Export history to Excel (Admin only - supports day, month, year filtering)
      * When spanning multiple months, each month gets its own sheet
      */
-    public function exportHistory(Request $request)
+    public function exportHistory(Request $request, $preFetchedLogs = null)
     {
-        $query = ItemLog::with(['item', 'user']);
-
-        if ($userId = $request->input('user_id')) {
-            if ($userId !== 'all') {
-                $query->where('user_id', $userId);
-            }
-        }
         $selectedYear = $request->input('year') ?: Carbon::now()->year;
         $startMonth = $request->input('start_month');
         $endMonth = $request->input('end_month');
         $isRange = ($startMonth && $endMonth && $startMonth <= $endMonth);
 
-        if ($isRange) {
-            $startDate = Carbon::create($selectedYear, $startMonth, 1)->startOfDay();
-            $endDate = Carbon::create($selectedYear, $endMonth, 1)->endOfMonth()->endOfDay();
-            $query->whereBetween('created_at', [$startDate, $endDate]);
+        if ($preFetchedLogs) {
+            $logs = $preFetchedLogs;
         } else {
-            if ($month = $request->input('month') ?: $startMonth) {
-                $query->whereMonth('created_at', $month);
-            }
-            if ($year = $request->input('year') ?: $selectedYear) {
-                $query->whereYear('created_at', $year);
-            }
-        }
+            $query = ItemLog::with(['item', 'user']);
 
-        // Filter by action only if it's a valid log action (not 'export' or 'print')
-        if ($actionFilter = $request->input('log_action')) {
-            $query->where('action', $actionFilter);
-        }
+            if ($userId = $request->input('user_id')) {
+                if ($userId !== 'all') {
+                    $query->where('user_id', $userId);
+                }
+            }
 
-        $logs = $query->latest('created_at')->get();
+            if ($isRange) {
+                $startDate = Carbon::create($selectedYear, $startMonth, 1)->startOfDay();
+                $endDate = Carbon::create($selectedYear, $endMonth, 1)->endOfMonth()->endOfDay();
+                $query->whereBetween('created_at', [$startDate, $endDate]);
+            } else {
+                if ($month = $request->input('month') ?: $startMonth) {
+                    $query->whereMonth('created_at', $month);
+                }
+                if ($year = $request->input('year') ?: $selectedYear) {
+                    $query->whereYear('created_at', $year);
+                }
+            }
+
+            // Filter by action only if it's a valid log action (not 'export' or 'print')
+            if ($actionFilter = $request->input('log_action')) {
+                $query->where('action', $actionFilter);
+            }
+
+            $logs = $query->latest('created_at')->get();
+        }
 
         // Filename Info
         $userInfo = 'Semua-Petugas';
@@ -128,9 +133,11 @@ class ItemHistoryController extends Controller
         $startMonth = $request->input('start_month');
         $endMonth = $request->input('end_month');
 
-        // Check if multi-month export is needed
-        if ($startMonth && $endMonth && $startMonth <= $endMonth) {
-            return $this->exportMultiMonthHistory($logs, $startMonth, $endMonth, $selectedYear, $userInfo);
+        // Auto-detect multi-month partitioning
+        $uniquePeriods = $logs->pluck('created_at')->map(fn($d) => $d->format('Y-m'))->unique();
+
+        if ($uniquePeriods->count() > 1 || ($startMonth && $endMonth && $startMonth < $endMonth)) {
+            return $this->exportMultiMonthHistory($logs, $userInfo, $startMonth, $endMonth, $selectedYear);
         }
 
         // Single month/period export
@@ -145,7 +152,7 @@ class ItemHistoryController extends Controller
     /**
      * Export history spanning multiple months - each month gets its own sheet
      */
-    private function exportMultiMonthHistory($allLogs, $startMonth, $endMonth, $year, $userInfo)
+    private function exportMultiMonthHistory($allLogs, $userInfo, $startMonth = null, $endMonth = null, $year = null)
     {
         $templatePath = storage_path('app/templates/template_history.xlsx');
         $hasTemplate = Storage::exists('templates/template_history.xlsx');
@@ -162,37 +169,77 @@ class ItemHistoryController extends Controller
             $templateSpreadsheet = IOFactory::load($templatePath);
         }
 
-        for ($m = $startMonth; $m <= $endMonth; $m++) {
+        // Group logs by year and month for automatic sheet generation
+        $groupedLogs = $allLogs->sortBy('created_at')->groupBy(function ($log) {
+            return $log->created_at->format('Y-m');
+        });
+
+        $usersFound = $allLogs->pluck('user.name')->unique();
+        $isMultiUser = $usersFound->count() > 1;
+
+        foreach ($groupedLogs as $period => $monthLogs) {
+            $date = Carbon::parse($period . '-01');
+            $m = $date->month;
+            $y = $date->year;
             $monthName = $this->getIndonesianMonth($m);
 
-            // Filter logs for this specific month
-            $monthLogs = $allLogs->filter(function ($log) use ($m, $year) {
-                return $log->created_at->month == $m && $log->created_at->year == $year;
-            });
+            if ($isMultiUser) {
+                // Split by User within the month
+                $logsByUser = $monthLogs->groupBy('user_id');
+                foreach ($logsByUser as $uid => $userLogs) {
+                    $u = $userLogs->first()->user;
+                    $shortUserName = substr($u->name, 0, 15);
 
-            // Create new sheet
-            $sheet = $spreadsheet->createSheet();
-            $sheet->setTitle($monthName);
+                    $sheet = $spreadsheet->createSheet();
+                    $sheet->setTitle(substr($monthName . ' - ' . $shortUserName, 0, 31));
 
-            // Copy from template or create default header
-            if ($templateSpreadsheet) {
-                $this->copyTemplateToSheet($templateSpreadsheet->getActiveSheet(), $sheet);
+                    if ($templateSpreadsheet) {
+                        $this->copyTemplateToSheet($templateSpreadsheet->getActiveSheet(), $sheet);
+                        $this->createDefaultHistoryHeader($sheet, $monthName . ' (' . $u->name . ')', $y);
+                    } else {
+                        $this->createDefaultHistoryHeader($sheet, $monthName . ' (' . $u->name . ')', $y);
+                    }
+
+                    $this->fillHistoryData($sheet, $userLogs, 6);
+                    $lastRow = 5 + $userLogs->count();
+                    if ($userLogs->count() > 0)
+                        $this->applyDataStyles($sheet, 6, $lastRow, 'A', 'G');
+                }
             } else {
-                $this->createDefaultHistoryHeader($sheet, $monthName, $year);
-            }
+                // Standard single user / combined month
+                $sheet = $spreadsheet->createSheet();
+                $sheet->setTitle($monthName . ' ' . $y);
 
-            // Fill data starting from row 6
-            $this->fillHistoryData($sheet, $monthLogs, 6);
+                if ($templateSpreadsheet) {
+                    $this->copyTemplateToSheet($templateSpreadsheet->getActiveSheet(), $sheet);
+                    $this->createDefaultHistoryHeader($sheet, $monthName, $y);
+                } else {
+                    $this->createDefaultHistoryHeader($sheet, $monthName, $y);
+                }
 
-            // Apply styling to data rows
-            $lastRow = 5 + $monthLogs->count();
-            if ($monthLogs->count() > 0) {
-                $this->applyDataStyles($sheet, 6, $lastRow, 'A', 'G');
+                $this->fillHistoryData($sheet, $monthLogs, 6);
+                $lastRow = 5 + $monthLogs->count();
+                if ($monthLogs->count() > 0)
+                    $this->applyDataStyles($sheet, 6, $lastRow, 'A', 'G');
             }
         }
 
+        if ($spreadsheet->getSheetCount() === 0) {
+            $spreadsheet->createSheet()->setTitle('Data Kosong');
+        }
+
         $spreadsheet->setActiveSheetIndex(0);
-        $filename = "riwayat-aktivitas-{$userInfo}-{$this->getIndonesianMonth($startMonth)}-{$this->getIndonesianMonth($endMonth)}-{$year}.xlsx";
+
+        // Generate dynamic filename based on data range
+        if ($allLogs->count() > 0) {
+            $minDate = $allLogs->min('created_at');
+            $maxDate = $allLogs->max('created_at');
+            $range = $minDate->format('M-Y') . '_to_' . $maxDate->format('M-Y');
+        } else {
+            $range = 'arsip';
+        }
+
+        $filename = "riwayat-aktivitas-{$userInfo}-{$range}.xlsx";
 
         return $this->outputExcel($spreadsheet, $filename);
     }

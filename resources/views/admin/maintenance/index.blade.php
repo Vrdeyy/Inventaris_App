@@ -23,7 +23,7 @@
                     <!-- Form 1: Pembersihan Periodik -->
                     <form action="{{ route('admin.maintenance.clear_history') }}" method="POST"
                         onsubmit="return confirm('APAKAH ANDA YAKIN? Data riwayat akan dihapus secara PERMANEN.');"
-                        class="space-y-4 mb-8">
+                        class="space-y-4">
                         @csrf
                         <div class="grid grid-cols-2 gap-4">
                             <div>
@@ -46,18 +46,40 @@
                             </div>
                         </div>
 
-                        <div>
-                            <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Jenis Aksi</label>
-                            <div class="flex gap-4">
-                                <label class="flex items-center space-x-2 cursor-pointer">
-                                    <input type="radio" name="mode" value="only_period" checked class="text-amber-600">
-                                    <span class="text-sm">Hanya bulan terpilih</span>
+                        <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-3 px-1">Jenis Aksi
+                                Pembersihan</label>
+                            <div class="space-y-3">
+                                <label
+                                    class="flex items-center p-3 bg-white border border-gray-200 rounded-lg cursor-pointer hover:border-amber-500 transition-colors group">
+                                    <input type="radio" name="mode" value="only_period" checked
+                                        class="w-4 h-4 text-amber-600 focus:ring-amber-500 border-gray-300">
+                                    <div class="ml-3">
+                                        <span class="block text-sm font-bold text-gray-800">Hanya di bulan terpilih</span>
+                                        <span class="block text-[10px] text-gray-500">Hapus permanen log yang dibuat pada
+                                            bulan & tahun ini.</span>
+                                    </div>
                                 </label>
-                                <label class="flex items-center space-x-2 cursor-pointer">
-                                    <input type="radio" name="mode" value="before_period" class="text-amber-600">
-                                    <span class="text-sm">Semua sebelum bulan terpilih</span>
+                                <label
+                                    class="flex items-center p-3 bg-white border border-gray-200 rounded-lg cursor-pointer hover:border-amber-500 transition-colors group">
+                                    <input type="radio" name="mode" value="before_period"
+                                        class="w-4 h-4 text-amber-600 focus:ring-amber-500 border-gray-300">
+                                    <div class="ml-3">
+                                        <span class="block text-sm font-bold text-gray-800">Semua sebelum bulan
+                                            terpilih</span>
+                                        <span class="block text-[10px] text-gray-500">Hapus semua riwayat yang ada sebelum
+                                            tanggal 1
+                                            {{ ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'][now()->month] }}.</span>
+                                    </div>
                                 </label>
                             </div>
+                        </div>
+
+                        <div class="flex items-center space-x-2 p-3 bg-blue-50 border border-blue-100 rounded-lg">
+                            <input type="checkbox" name="archive" value="1" id="archive_history"
+                                class="rounded text-blue-600">
+                            <label for="archive_history" class="text-xs text-blue-800 font-medium">Download arsip filter ini
+                                ke Excel sebelum dihapus</label>
                         </div>
 
                         <button type="submit"
@@ -65,24 +87,6 @@
                             Hapus Riwayat Secara Permanen
                         </button>
                     </form>
-
-                    <hr class="my-6">
-
-                    <!-- Opsi Arsip & Reset -->
-                    <div class="bg-gray-50 border border-gray-100 rounded-lg p-4">
-                        <h3 class="text-sm font-bold text-gray-800 mb-2">Arsip & Reset Total</h3>
-                        <p class="text-xs text-gray-500 mb-4">Export seluruh riwayat dari awal sistem hingga hari ini ke
-                            Excel, lalu kosongkan total tabel riwayat.</p>
-                        <form action="{{ route('admin.maintenance.clear_history') }}" method="POST"
-                            onsubmit="return confirm('Sistem akan mendownload semua riwayat lalu MENGHAPUS SEMUA LOG. Lanjutkan?');">
-                            @csrf
-                            <input type="hidden" name="mode" value="archive_all">
-                            <button type="submit"
-                                class="flex items-center justify-center w-full px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-bold shadow-sm">
-                                📊 Export Arsip & Kosongkan Log
-                            </button>
-                        </form>
-                    </div>
                 </div>
             </div>
         </div>
@@ -126,8 +130,10 @@
                         </div>
 
                         <div class="flex items-center space-x-2 p-3 bg-emerald-50 border border-emerald-100 rounded-lg">
-                            <input type="checkbox" name="archive" value="1" id="archive_items" checked class="rounded text-emerald-600">
-                            <label for="archive_items" class="text-sm text-emerald-800 font-medium">Download Arsip Excel sebelum dihapus (Sangat Disarankan)</label>
+                            <input type="checkbox" name="archive" value="1" id="archive_items" checked
+                                class="rounded text-emerald-600">
+                            <label for="archive_items" class="text-sm text-emerald-800 font-medium">Download Arsip Excel
+                                sebelum dihapus (Sangat Disarankan)</label>
                         </div>
 
                         <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-3">
