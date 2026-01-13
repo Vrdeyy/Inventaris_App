@@ -176,7 +176,7 @@
                                 </span>
                             </p>
                             <p class="text-xs text-gray-600 mt-1 font-medium italic">"{{ $log->item->name ?? 'Barang Dihapus' }}"</p>
-                            <p class="text-[10px] text-gray-400 mt-1 font-bold">{{ $log->created_at->diffForHumans() }}</p>
+                            <p class="text-[10px] text-gray-400 mt-1 font-bold">{{ $log->created_at->format('d/m/Y H:i') }}</p>
                         </div>
                     </div>
                 @empty

@@ -138,7 +138,7 @@
                         <div class="flex-1 min-w-0">
                             <p class="text-[11px] font-black text-gray-400 uppercase tracking-tighter">{{ strtoupper($log->action) }}</p>
                             <p class="text-xs font-bold text-gray-800 truncate">{{ $log->item->name ?? 'Barang Dihapus' }}</p>
-                            <p class="text-[10px] text-gray-400 mt-0.5 font-medium">{{ $log->created_at->diffForHumans() }}</p>
+                            <p class="text-[10px] text-gray-400 mt-0.5 font-medium">{{ $log->created_at->format('d/m/Y H:i') }}</p>
                         </div>
                     </div>
                 @empty
