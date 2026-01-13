@@ -113,6 +113,9 @@ Akses aplikasi di: `http://localhost:8000`
 
 ---
 
+## 📂 Data Dumyy
+php artisan db:seed --class=DummyDataSeeder
+
 ## 📂 Lokasi Template Excel
 Anda dapat menyesuaikan tampilan laporan Excel melalui file template yang berlokasi di:
 `storage/app/templates/template_items.xlsx` (Daftar Barang)
