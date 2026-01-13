@@ -16,12 +16,12 @@
                     <!-- Kode (Read Only) -->
 
 
-                    <!-- Kategori (Read Only) -->
+                    <!-- Kategori -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Kategori (Gak Bisa Diubah)</label>
-                        <input type="text" value="{{ $item->category }}"
-                            class="w-full rounded-lg bg-gray-50 border-gray-200 text-gray-500 p-2 border cursor-not-allowed"
-                            readonly>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Kategori</label>
+                        <input type="text" name="category" value="{{ old('category', $item->category) }}"
+                            class="w-full rounded-lg border-gray-300 focus:ring-indigo-500 focus:border-indigo-500 p-2 border"
+                            required>
                     </div>
 
                     <!-- Nama -->

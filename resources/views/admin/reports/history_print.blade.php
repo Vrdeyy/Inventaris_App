@@ -68,13 +68,12 @@
                             <td class="p-2 border border-slate-200 font-bold text-slate-700">{{ $log->user->name ?? '-' }}</td>
                         @endif
                         <td class="p-2 border border-slate-200">
-                            <span class="font-bold">{{ $log->item->name ?? '-' }}</span><br>
-                            <span class="text-[10px] text-slate-500">{{ $log->item->code ?? '-' }}</span>
+                            <span class="font-bold">{{ $log->item->name ?? '-' }}</span>
                         </td>
                         <td class="p-2 border border-slate-200">
                             <span
                                 class="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase balance
-                                            {{ $log->action === 'create' ? 'bg-emerald-100 text-emerald-800' : ($log->action === 'update' ? 'bg-blue-100 text-blue-800' : 'bg-red-100 text-red-800') }}">
+                                                {{ $log->action === 'create' ? 'bg-emerald-100 text-emerald-800' : ($log->action === 'update' ? 'bg-blue-100 text-blue-800' : 'bg-red-100 text-red-800') }}">
                                 {{ $log->action }}
                             </span>
                         </td>

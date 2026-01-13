@@ -20,12 +20,8 @@
                 </div>
                 <div class="p-6 space-y-4">
                     <div>
-                        <label class="text-xs font-medium text-gray-500 uppercase tracking-wider">Kode Barang</label>
-                        <p class="text-lg font-bold text-gray-900">{{ $item->code }}</p>
-                    </div>
-                    <div>
                         <label class="text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Barang</label>
-                        <p class="text-lg font-semibold text-gray-800">{{ $item->name }}</p>
+                        <p class="text-lg font-bold text-gray-900">{{ $item->name }}</p>
                     </div>
                     <div>
                         <label class="text-xs font-medium text-gray-500 uppercase tracking-wider">Kategori</label>

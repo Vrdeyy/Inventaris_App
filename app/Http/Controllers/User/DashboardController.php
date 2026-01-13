@@ -11,10 +11,10 @@ class DashboardController extends Controller
     public function index()
     {
         $stats = [
-            'total' => Item::where('user_id', auth()->id())->count(),
-            'baik' => Item::where('user_id', auth()->id())->where('condition', 'baik')->count(),
-            'rusak' => Item::where('user_id', auth()->id())->where('condition', 'rusak')->count(),
-            'hilang' => Item::where('user_id', auth()->id())->where('condition', 'hilang')->count(),
+            'total' => Item::where('user_id', auth()->id())->sum('quantity'),
+            'baik' => Item::where('user_id', auth()->id())->sum('qty_baik'),
+            'rusak' => Item::where('user_id', auth()->id())->sum('qty_rusak'),
+            'hilang' => Item::where('user_id', auth()->id())->sum('qty_hilang'),
         ];
 
         $recentLogs = \App\Models\ItemLog::with('item')

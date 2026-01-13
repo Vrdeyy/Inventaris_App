@@ -177,13 +177,14 @@
                         <tr class="hover:bg-gray-50">
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="text-sm text-gray-900">
-                                    {{ $log->created_at ? $log->created_at->format('d M Y') : '-' }}</div>
+                                    {{ $log->created_at ? $log->created_at->format('d M Y') : '-' }}
+                                </div>
                                 <div class="text-xs text-gray-500">
-                                    {{ $log->created_at ? $log->created_at->format('H:i') : '' }}</div>
+                                    {{ $log->created_at ? $log->created_at->format('H:i') : '' }}
+                                </div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="text-sm font-medium text-gray-900">{{ $log->item->name ?? '-' }}</div>
-                                <div class="text-xs text-gray-500">{{ $log->item->code ?? '-' }}</div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 @php
@@ -203,8 +204,7 @@
                                     @if ($log->action === 'create')
                                         <span class="text-emerald-600 font-medium">{{ ucfirst($log->new_condition) }}</span>
                                     @elseif($log->old_condition !== $log->new_condition)
-                                        <span
-                                            class="line-through text-gray-400">{{ ucfirst($log->old_condition ?? '-') }}</span>
+                                        <span class="line-through text-gray-400">{{ ucfirst($log->old_condition ?? '-') }}</span>
                                         <span class="mx-1">→</span>
                                         <span class="text-indigo-600 font-medium">{{ ucfirst($log->new_condition) }}</span>
                                     @else

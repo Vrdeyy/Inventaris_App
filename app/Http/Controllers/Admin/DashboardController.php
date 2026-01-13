@@ -13,13 +13,13 @@ class DashboardController extends Controller
     public function dashboard()
     {
         $stats = [
-            'total_items' => Item::count(),
+            'total_items' => Item::sum('quantity'),
             'active_users' => User::where('role', 'user')->count(),
             'total_logs' => ItemLog::count(),
             'conditions' => [
-                'baik' => Item::where('condition', 'baik')->count(),
-                'rusak' => Item::where('condition', 'rusak')->count(),
-                'hilang' => Item::where('condition', 'hilang')->count(),
+                'baik' => Item::sum('qty_baik'),
+                'rusak' => Item::sum('qty_rusak'),
+                'hilang' => Item::sum('qty_hilang'),
             ],
         ];
 

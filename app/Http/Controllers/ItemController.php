@@ -68,7 +68,6 @@ class ItemController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'code' => 'required|unique:items',
             'name' => 'required',
             'category' => 'required',
             'location' => 'required',
@@ -143,6 +142,7 @@ class ItemController extends Controller
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'category' => 'required|string|max:255',
             'location' => 'required|string|max:255',
             'placement_type' => 'required|in:dalam_ruang,dalam_lemari',
             'qty_baik' => 'required|integer|min:0',
@@ -181,6 +181,7 @@ class ItemController extends Controller
 
         $item->update([
             'name' => $validated['name'],
+            'category' => $validated['category'],
             'location' => $validated['location'],
             'placement_type' => $validated['placement_type'],
             'quantity' => $total,
@@ -366,7 +367,7 @@ class ItemController extends Controller
                 // Apply styling to data rows
                 $lastRow = 6 + $placementItems->count();
                 if ($placementItems->count() > 0) {
-                    $this->applyDataStyles($sheet, 7, $lastRow, 'A', 'J');
+                    $this->applyDataStyles($sheet, 7, $lastRow, 'A', 'H');
                 }
             }
         }
@@ -408,7 +409,7 @@ class ItemController extends Controller
             // Apply styling to data rows
             $lastRow = 6 + $items->count();
             if ($items->count() > 0) {
-                $this->applyDataStylesFromTemplate($sheet, 7, $lastRow, 'A', 'J');
+                $this->applyDataStylesFromTemplate($sheet, 7, $lastRow, 'A', 'H');
             }
 
             return $this->outputExcel($spreadsheet, $filename);
@@ -436,7 +437,7 @@ class ItemController extends Controller
             // Apply styling to data rows
             $lastRow = 6 + $placementItems->count();
             if ($placementItems->count() > 0) {
-                $this->applyDataStyles($sheet, 7, $lastRow, 'A', 'J');
+                $this->applyDataStyles($sheet, 7, $lastRow, 'A', 'H');
             }
         }
 
@@ -452,7 +453,7 @@ class ItemController extends Controller
     private function createDefaultItemsHeader($sheet, $month = null, $year = null)
     {
         // Title (Baris 1)
-        $sheet->mergeCells('A1:J1');
+        $sheet->mergeCells('A1:H1');
         $sheet->setCellValue('A1', 'Inventaris Barang - Barang Laboratorium');
         $sheet->getStyle('A1')->applyFromArray([
             'font' => ['bold' => true, 'size' => 14],
@@ -470,11 +471,9 @@ class ItemController extends Controller
             'A5:A6' => 'no',
             'B5:B6' => 'nama',
             'C5:C6' => 'kategori',
-            'D5:D6' => 'lok',
-            'E5:G5' => 'kondisi per unit',
-            'H5:H6' => 'total',
-            'I5:I6' => 'status',
-            'J5:J6' => 'tanggal input'
+            'D5:F5' => 'kondisi per unit',
+            'G5:G6' => 'total',
+            'H5:H6' => 'tanggal input'
         ];
 
         foreach ($headers as $range => $label) {
@@ -483,12 +482,12 @@ class ItemController extends Controller
         }
 
         // Sub-header Kondisi (Baris 6)
-        $sheet->setCellValue('E6', 'baik');
-        $sheet->setCellValue('F6', 'rusak');
-        $sheet->setCellValue('G6', 'hilang');
+        $sheet->setCellValue('D6', 'baik');
+        $sheet->setCellValue('E6', 'rusak');
+        $sheet->setCellValue('F6', 'hilang');
 
-        // Style Header (A5:J6)
-        $sheet->getStyle('A5:J6')->applyFromArray([
+        // Style Header (A5:H6)
+        $sheet->getStyle('A5:H6')->applyFromArray([
             'font' => [
                 'bold' => true,
                 'color' => ['rgb' => '000000'], // Font Hitam sesuai template
@@ -511,7 +510,7 @@ class ItemController extends Controller
         ]);
 
         // Column Widths
-        $widths = ['A' => 5, 'B' => 28, 'C' => 15, 'D' => 18, 'E' => 8, 'F' => 8, 'G' => 8, 'H' => 8, 'I' => 15, 'J' => 14];
+        $widths = ['A' => 5, 'B' => 28, 'C' => 15, 'D' => 8, 'E' => 8, 'F' => 8, 'G' => 8, 'H' => 14];
         foreach ($widths as $col => $w)
             $sheet->getColumnDimension($col)->setWidth($w);
 
@@ -533,19 +532,17 @@ class ItemController extends Controller
             $sheet->setCellValue('A' . $row, $no++);
             $sheet->setCellValue('B' . $row, $item->name);
             $sheet->setCellValue('C' . $row, $item->category);
-            $sheet->setCellValue('D' . $row, $item->location);
 
             // Tulis Angka & Paksa Format menjadi General/Number (Menghindari "00/01/1900")
-            $sheet->setCellValue('E' . $row, $item->qty_baik);
-            $sheet->setCellValue('F' . $row, $item->qty_rusak);
-            $sheet->setCellValue('G' . $row, $item->qty_hilang);
-            $sheet->setCellValue('H' . $row, $item->quantity);
+            $sheet->setCellValue('D' . $row, $item->qty_baik);
+            $sheet->setCellValue('E' . $row, $item->qty_rusak);
+            $sheet->setCellValue('F' . $row, $item->qty_hilang);
+            $sheet->setCellValue('G' . $row, $item->quantity);
 
-            // Reset format kolom E-H ke General agar tidak jadi tanggal
-            $sheet->getStyle("E{$row}:H{$row}")->getNumberFormat()->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_GENERAL);
+            // Reset format kolom D-H ke General agar tidak jadi tanggal
+            $sheet->getStyle("D{$row}:G{$row}")->getNumberFormat()->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_GENERAL);
 
-            $sheet->setCellValue('I' . $row, $conditionLabel);
-            $sheet->setCellValue('J' . $row, $item->created_at->format('d/m/Y'));
+            $sheet->setCellValue('H' . $row, $item->created_at->format('d/m/Y'));
             $row++;
         }
     }
@@ -572,18 +569,17 @@ class ItemController extends Controller
 
         // Center align specific columns
         $sheet->getStyle("A{$startRow}:A{$endRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-        $sheet->getStyle("E{$startRow}:H{$endRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-        $sheet->getStyle("I{$startRow}:I{$endRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-        $sheet->getStyle("J{$startRow}:J{$endRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle("D{$startRow}:G{$endRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle("H{$startRow}:H{$endRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
         // Force Number Formatting
-        $sheet->getStyle("E{$startRow}:H{$endRow}")->getNumberFormat()->setFormatCode('#,##0');
-        $sheet->getStyle("J{$startRow}:J{$endRow}")->getNumberFormat()->setFormatCode('dd/mm/yyyy');
+        $sheet->getStyle("D{$startRow}:G{$endRow}")->getNumberFormat()->setFormatCode('#,##0');
+        $sheet->getStyle("H{$startRow}:H{$endRow}")->getNumberFormat()->setFormatCode('dd/mm/yyyy');
 
         // Alternating row colors (Sangat tipis agar tetap bersih)
         for ($row = $startRow; $row <= $endRow; $row++) {
             if (($row - $startRow) % 2 == 1) {
-                $sheet->getStyle("A{$row}:J{$row}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('FAF8F6');
+                $sheet->getStyle("A{$row}:H{$row}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('FAF8F6');
             }
         }
     }
@@ -606,12 +602,12 @@ class ItemController extends Controller
 
         // Center align specific columns
         $sheet->getStyle("A{$startRow}:A{$endRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-        $sheet->getStyle("E{$startRow}:H{$endRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-        $sheet->getStyle("J{$startRow}:J{$endRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle("D{$startRow}:G{$endRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle("H{$startRow}:H{$endRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
         // Force Number/Date Formatting
-        $sheet->getStyle("E{$startRow}:H{$endRow}")->getNumberFormat()->setFormatCode('#,##0');
-        $sheet->getStyle("J{$startRow}:J{$endRow}")->getNumberFormat()->setFormatCode('dd/mm/yyyy');
+        $sheet->getStyle("D{$startRow}:G{$endRow}")->getNumberFormat()->setFormatCode('#,##0');
+        $sheet->getStyle("H{$startRow}:H{$endRow}")->getNumberFormat()->setFormatCode('dd/mm/yyyy');
     }
 
     /**
@@ -622,7 +618,7 @@ class ItemController extends Controller
     {
         // Copy rows 1-6 (header)
         for ($row = 1; $row <= 6; $row++) {
-            for ($col = 'A'; $col <= 'J'; $col++) {
+            for ($col = 'A'; $col <= 'H'; $col++) {
                 $cellValue = $templateSheet->getCell($col . $row)->getValue();
                 $targetSheet->setCellValue($col . $row, $cellValue);
 
@@ -649,8 +645,8 @@ class ItemController extends Controller
             );
         }
 
-        // Copy column widths A sampai J
-        foreach (range('A', 'J') as $col) {
+        // Copy column widths A sampai H
+        foreach (range('A', 'H') as $col) {
             $targetSheet->getColumnDimension($col)->setWidth(
                 $templateSheet->getColumnDimension($col)->getWidth()
             );
@@ -672,7 +668,7 @@ class ItemController extends Controller
     private function cleanHeaderArea($sheet)
     {
         for ($row = 1; $row <= 4; $row++) {
-            $sheet->getStyle("A{$row}:J{$row}")->applyFromArray([
+            $sheet->getStyle("A{$row}:H{$row}")->applyFromArray([
                 'fill' => [
                     'fillType' => Fill::FILL_NONE,
                 ],

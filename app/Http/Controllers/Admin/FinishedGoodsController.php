@@ -54,13 +54,12 @@ class FinishedGoodsController extends Controller
         ];
 
         $callback = function () use ($logs, $handle) {
-            fputcsv($handle, ['Date', 'User', 'Item Code', 'Item Name', 'Action', 'Old Qty', 'New Qty', 'Description']);
+            fputcsv($handle, ['Date', 'User', 'Item Name', 'Action', 'Old Qty', 'New Qty', 'Description']);
 
             foreach ($logs as $log) {
                 fputcsv($handle, [
                     $log->created_at,
                     $log->user->name ?? 'Unknown',
-                    $log->item->code ?? 'N/A',
                     $log->item->name ?? 'N/A',
                     $log->action,
                     $log->old_quantity,
