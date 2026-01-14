@@ -11,21 +11,12 @@ class MonitoringController extends Controller
     public function index()
     {
         // Get all users with their item stats
-        $users = User::where('role', 'user')->withCount([
-            'items as total_items',
-            'items as baik_items' => function ($query) {
-                $query->where('condition', 'baik');
-            },
-            'items as rusak_items' => function ($query) {
-                $query->where('condition', 'rusak');
-            },
-            'items as hilang_items' => function ($query) {
-                $query->where('condition', 'hilang');
-            },
-            'items as sebagian_rusak_items' => function ($query) {
-                $query->where('condition', 'sebagian_rusak');
-            }
-        ])->get();
+        $users = User::where('role', 'user')
+            ->withSum('items', 'quantity')
+            ->withSum('items', 'qty_baik')
+            ->withSum('items', 'qty_rusak')
+            ->withSum('items', 'qty_hilang')
+            ->get();
 
         return view('admin.monitoring.index', compact('users'));
     }
@@ -54,7 +45,9 @@ class MonitoringController extends Controller
             ->latest()
             ->paginate(15, ['*'], 'logs_page');
 
-        return view('admin.monitoring.show', compact('items', 'logs', 'user'));
+        $totalUnits = $user->items()->sum('quantity');
+
+        return view('admin.monitoring.show', compact('items', 'logs', 'user', 'totalUnits'));
     }
 
     public function printUserItems(Request $request, User $user)

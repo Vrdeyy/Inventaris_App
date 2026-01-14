@@ -34,7 +34,7 @@
             </div>
             <div class="border-l border-gray-100 pl-8">
                 <p class="text-sm text-gray-500 font-medium">Beban Aset</p>
-                <p class="text-xl font-bold text-gray-900 leading-none">{{ $items->total() }} Item</p>
+                <p class="text-xl font-bold text-gray-900 leading-none">{{ $totalUnits }} Unit</p>
             </div>
         </div>
     </div>

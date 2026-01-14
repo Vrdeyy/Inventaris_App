@@ -9,7 +9,7 @@
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <!-- Monitoring Report Card (Daftar Barang) -->
         <div
-            class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition duration-300">
+            class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition duration-300 hover:-translate-y-1">
             <div class="p-6 border-b border-gray-50 bg-slate-50">
                 <div class="flex items-center space-x-3">
                     <div class="p-2 bg-emerald-600 rounded-lg">
@@ -129,7 +129,7 @@
 
         <!-- History Report Card (Riwayat Aktivitas) -->
         <div
-            class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition duration-300">
+            class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition duration-300 hover:-translate-y-1">
             <div class="p-6 border-b border-gray-50 bg-indigo-50">
                 <div class="flex items-center space-x-3">
                     <div class="p-2 bg-indigo-600 rounded-lg">

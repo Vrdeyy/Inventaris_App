@@ -114,7 +114,8 @@ Akses aplikasi di: `http://localhost:8000`
 ---
 
 ## 📂 Data Dumyy
-php artisan db:seed --class=DummyDataSeeder
+'php artisan db:seed --class=DummyDataSeeder'
+Note: Kalo dah setup Butuh Dummy lagi(Dumyy awal udh dihapus)
 
 ## 📂 Lokasi Template Excel
 Anda dapat menyesuaikan tampilan laporan Excel melalui file template yang berlokasi di:

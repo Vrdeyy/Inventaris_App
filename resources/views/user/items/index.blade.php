@@ -127,7 +127,7 @@
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
                     @forelse($items as $item)
-                        <tr class="hover:bg-gray-50">
+                        <tr class="hover:bg-indigo-50/50 transition-colors duration-200">
 
                             <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-700 font-bold">{{ $item->name }}</td>
                             <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{{ $item->category }}</td>
