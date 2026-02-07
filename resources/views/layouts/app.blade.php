@@ -12,6 +12,7 @@
     <style>
         body {
             font-family: 'Instrument Sans', 'Inter', sans-serif;
+            overflow-x: hidden;
         }
 
         @keyframes fadeIn {
@@ -47,6 +48,48 @@
 
         ::-webkit-scrollbar-thumb:hover {
             background: #a8a8a8;
+        }
+
+        @media (max-width: 640px) {
+            .table-responsive {
+                display: block;
+            }
+            .table-responsive thead {
+                display: none;
+            }
+            .table-responsive tbody {
+                display: block;
+            }
+            .table-responsive tbody tr {
+                display: block;
+                margin-bottom: 1.5rem;
+                border: 1px solid #e5e7eb;
+                border-radius: 1rem;
+                padding: 0.5rem;
+                background: white;
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            }
+            .table-responsive tbody td {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 0.5rem 1rem;
+                border-bottom: 1px solid #f3f4f6;
+                white-space: normal;
+                text-align: right;
+            }
+            .table-responsive tbody td:last-child {
+                border-bottom: none;
+            }
+            .table-responsive tbody td::before {
+                content: attr(data-label);
+                font-weight: 700;
+                text-transform: uppercase;
+                font-size: 0.75rem;
+                color: #6b7280;
+                margin-right: 1rem;
+                text-align: left;
+            }
         }
     </style>
     <script src="//unpkg.com/alpinejs" defer></script>
@@ -126,9 +169,9 @@
             class="fixed inset-0 z-20 bg-slate-900/50 backdrop-blur-sm lg:hidden"></div>
 
         <!-- Main Content -->
-        <div class="flex flex-col flex-1 lg:pl-64 h-screen">
+        <div class="flex flex-col flex-1 lg:pl-64 min-h-screen">
             <header
-                class="flex items-center justify-between flex-shrink-0 h-16 px-6 bg-white/80 backdrop-blur-md border-b border-gray-200 shadow-sm z-10 sticky top-0">
+                class="flex items-center justify-between flex-shrink-0 h-16 px-6 bg-white/80 backdrop-blur-md border-b border-gray-200 shadow-sm z-20 sticky top-0">
                 <button @click="sidebarOpen = !sidebarOpen"
                     class="text-gray-500 hover:text-gray-700 lg:hidden focus:outline-none transition-transform active:scale-95">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -139,19 +182,19 @@
                 <div class="flex ml-auto items-center space-x-4">
                     <div class="flex items-center gap-3 pl-4 border-l border-gray-200">
                         <div class="flex flex-col items-end">
-                            <span class="text-sm font-bold text-gray-800">{{ auth()->user()->name }}</span>
+                            <span class="text-sm font-bold text-gray-800 hidden sm:block truncate max-w-[150px]">{{ auth()->user()->name }}</span>
                             <span
-                                class="text-[10px] font-bold tracking-wider text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-100">{{ strtoupper(auth()->user()->role) }}</span>
+                                class="text-[10px] font-bold tracking-wider text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-100 uppercase">{{ auth()->user()->role }}</span>
                         </div>
                         <div
-                            class="h-8 w-8 rounded-full bg-indigo-100 border border-indigo-200 flex items-center justify-center text-indigo-700 font-bold shadow-sm">
+                            class="h-9 w-9 rounded-full bg-gradient-to-br from-indigo-50 to-indigo-100 border border-indigo-200 flex items-center justify-center text-indigo-700 font-black shadow-sm group-hover:scale-105 transition-transform">
                             {{ substr(auth()->user()->name, 0, 1) }}
                         </div>
                     </div>
                 </div>
             </header>
 
-            <main class="flex-1 flex flex-col p-4 md:p-6 overflow-y-auto bg-gray-50 animate-fade-in">
+            <main class="flex-1 flex flex-col p-4 md:p-6 bg-gray-50 animate-fade-in relative">
                 @if(session('success'))
                     <div
                         class="mb-6 p-4 text-emerald-700 bg-emerald-50 rounded-xl border border-emerald-200 flex items-center shadow-sm animate-pulse">

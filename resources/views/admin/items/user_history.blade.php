@@ -10,10 +10,10 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                     </svg>
-                    Kembali ke Daftar Petugas
+                    Kembali
                 </a>
             </div>
-            <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">Timeline Aktivitas <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-indigo-800">{{ $user->name }}</span>
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">Timeline Aktivitas <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-indigo-800 block sm:inline">{{ $user->name }}</span>
             </h1>
             <p class="text-gray-500 mt-1">Jejak digital pengelolaan inventaris oleh petugas.</p>
         </div>
@@ -24,7 +24,7 @@
                 $monthName = $m ? date('F', mktime(0, 0, 0, $m, 1)) : now()->format('F');
             @endphp
             <a href="{{ route('admin.reports.generate', ['report_type' => 'history', 'user_id' => $user->id, 'start_month' => request('month') ?: now()->month, 'end_month' => request('month') ?: now()->month, 'year' => request('year') ?: now()->year, 'date' => request('date'), 'action' => 'export']) }}"
-                class="px-5 py-2.5 bg-white text-emerald-700 border border-emerald-200 rounded-xl hover:bg-emerald-50 hover:border-emerald-300 transition-all text-sm font-bold shadow-sm hover:shadow flex items-center group">
+                class="w-full sm:w-auto px-5 py-2.5 bg-white text-emerald-700 border border-emerald-200 rounded-xl hover:bg-emerald-50 hover:border-emerald-300 transition-all text-sm font-bold shadow-sm hover:shadow flex items-center group justify-center">
                 <svg class="w-4 h-4 mr-2 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                 Export Excel ({{ $monthName }})
             </a>
@@ -70,9 +70,9 @@
     </div>
 
     <!-- Timeline List -->
-    <div class="bg-white rounded-3xl shadow-xl shadow-gray-100 border border-gray-100 overflow-hidden relative">
+    <div class="bg-white rounded-3xl shadow-xl shadow-gray-100 border border-gray-100 overflow-visible sm:overflow-hidden relative">
         <div class="absolute top-0 right-0 w-64 h-64 bg-indigo-50 rounded-full opacity-30 -mr-16 -mt-16 pointer-events-none"></div>
-        <div class="p-8 relative z-10">
+        <div class="p-4 sm:p-8 relative z-10">
             <div class="flow-root">
                 <ul role="list" class="-mb-8">
                     @forelse ($logs as $log)
@@ -81,7 +81,7 @@
                                 @if (!$loop->last)
                                     <span class="absolute left-5 top-10 -ml-px h-full w-0.5 bg-gray-100 group-hover:bg-indigo-100 transition-colors"></span>
                                 @endif
-                                <div class="relative flex space-x-6">
+                                <div class="relative flex space-x-4 sm:space-x-6">
                                     <div class="relative">
                                         <span
                                             class="flex h-10 w-10 items-center justify-center rounded-full 
@@ -97,22 +97,22 @@
                                             </svg>
                                         </span>
                                     </div>
-                                    <div class="flex-1 min-w-0 bg-gray-50 rounded-2xl p-5 border border-transparent group-hover:bg-white group-hover:border-gray-100 group-hover:shadow-lg transition-all duration-300">
-                                        <div class="flex items-center justify-between mb-2">
+                                    <div class="flex-1 min-w-0 bg-gray-50 rounded-2xl p-4 sm:p-5 border border-transparent group-hover:bg-white group-hover:border-gray-100 group-hover:shadow-lg transition-all duration-300">
+                                        <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-2 gap-2">
                                             <div class="flex items-center space-x-3">
-                                                <span class="px-2.5 py-1 rounded-lg text-xs font-black uppercase tracking-wide
+                                                <span class="px-2.5 py-1 rounded-lg text-[10px] sm:text-xs font-black uppercase tracking-wide
                                                     {{ $log->action === 'create' ? 'bg-emerald-100 text-emerald-700' : ($log->action === 'update' ? 'bg-indigo-100 text-indigo-700' : 'bg-red-100 text-red-700') }}">
                                                     {{ $log->action }}
                                                 </span>
-                                                <span class="text-xs font-bold text-gray-400 flex items-center">
+                                                <span class="text-[10px] sm:text-xs font-bold text-gray-400 flex items-center">
                                                     <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                                                     {{ $log->created_at->format('H:i') }}
                                                 </span>
                                             </div>
-                                            <time class="text-xs font-bold text-gray-500 bg-white px-2 py-1 rounded-md border border-gray-100 shadow-sm">{{ $log->created_at->format('d M Y') }}</time>
+                                            <time class="text-[10px] sm:text-xs font-bold text-gray-500 bg-white px-2 py-1 rounded-md border border-gray-100 shadow-sm w-fit">{{ $log->created_at->format('d M Y') }}</time>
                                         </div>
                                         
-                                        <h3 class="text-lg font-bold text-gray-900 group-hover:text-indigo-600 transition-colors">
+                                        <h3 class="text-base sm:text-lg font-bold text-gray-900 group-hover:text-indigo-600 transition-colors">
                                              {{ $log->item->name ?? ($log->item_id ? 'Barang #' . $log->item_id : 'Unknown') }}
                                         </h3>
 

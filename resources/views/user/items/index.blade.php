@@ -103,9 +103,9 @@
         </form>
     </div>
 
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-visible sm:overflow-hidden">
+        <div class="block sm:overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200 table-responsive">
                 <thead class="bg-gray-50">
                     <tr>
 
@@ -127,12 +127,12 @@
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
                     @forelse($items as $item)
-                        <tr class="hover:bg-indigo-50/50 transition-colors duration-200">
+                        <tr class="hover:bg-indigo-50/50 transition-colors duration-200 block sm:table-row min-h-[50px]">
 
-                            <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-700 font-bold">{{ $item->name }}</td>
-                            <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{{ $item->category }}</td>
-                            <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{{ $item->location }}</td>
-                            <td class="px-4 py-4 whitespace-nowrap">
+                            <td data-label="Barang" class="px-4 py-4 whitespace-normal sm:whitespace-nowrap text-sm text-gray-700 font-bold sm:text-left text-right">{{ $item->name }}</td>
+                            <td data-label="Kategori" class="px-4 py-4 whitespace-normal sm:whitespace-nowrap text-sm text-gray-500 sm:text-left text-right">{{ $item->category }}</td>
+                            <td data-label="Lokasi" class="px-4 py-4 whitespace-normal sm:whitespace-nowrap text-sm text-gray-500 sm:text-left text-right">{{ $item->location }}</td>
+                            <td data-label="Tempat" class="px-4 py-4 whitespace-normal sm:whitespace-nowrap sm:text-left text-right">
                                 @php
                                     $placementColor = $item->placement_type === 'dalam_lemari'
                                         ? 'bg-purple-100 text-purple-800'
@@ -143,7 +143,7 @@
                                     {{ $item->placement_label }}
                                 </span>
                             </td>
-                            <td class="px-4 py-4 whitespace-nowrap text-center">
+                            <td data-label="Jumlah" class="px-4 py-4 whitespace-normal sm:whitespace-nowrap sm:text-center text-right">
                                 <div class="text-sm font-bold text-gray-700">{{ $item->quantity }}</div>
                                 <div class="text-xs text-gray-500">
                                     @if($item->qty_baik > 0)<span class="text-emerald-600">{{ $item->qty_baik }}B</span>@endif
@@ -153,7 +153,7 @@
                                     class="text-red-600 ml-1">{{ $item->qty_hilang }}H</span>@endif
                                 </div>
                             </td>
-                            <td class="px-4 py-4 whitespace-nowrap">
+                            <td data-label="Kondisi" class="px-4 py-4 whitespace-normal sm:whitespace-nowrap sm:text-left text-right">
                                 @php
                                     $color = match ($item->condition) {
                                         'baik' => 'bg-emerald-100 text-emerald-800',
@@ -167,7 +167,7 @@
                                     {{ $item->condition === 'sebagian_rusak' ? 'Sebagian Rusak' : ucfirst($item->condition) }}
                                 </span>
                             </td>
-                            <td class="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <td data-label="Aksi" class="px-4 py-4 whitespace-normal sm:whitespace-nowrap text-right text-sm font-medium">
                                 @if(auth()->user()->role === 'user')
                                     <a href="{{ route('user.items.edit', $item->id) }}"
                                         class="text-indigo-600 hover:text-indigo-900 mr-3">Edit</a>

@@ -2,9 +2,9 @@
 
 @section('content')
     <div class="max-w-3xl mx-auto">
-        <div class="mb-6 flex items-center justify-between">
-            <h1 class="text-2xl font-bold text-gray-800">Edit Barang: {{ $item->name }}</h1>
-            <a href="{{ route('user.items.index') }}" class="text-indigo-600 hover:text-indigo-800">← Kembali</a>
+        <div class="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Edit Barang: {{ $item->name }}</h1>
+            <a href="{{ route('user.items.index') }}" class="text-indigo-600 hover:text-indigo-800 font-bold text-sm">← Kembali</a>
         </div>
 
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
@@ -127,9 +127,9 @@
                     <p class="mt-1 text-xs text-gray-500 italic">Harap jelaskan kenapa data ini diubah.</p>
                 </div>
 
-                <div class="flex justify-end pt-4 border-t border-gray-100">
+                <div class="flex flex-col sm:flex-row justify-end gap-3 pt-4 border-t border-gray-100">
                     <button type="submit"
-                        class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition shadow-sm font-bold">
+                        class="w-full sm:w-auto px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition shadow-sm font-bold">
                         Update Data Barang
                     </button>
                 </div>

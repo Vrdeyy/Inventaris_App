@@ -2,10 +2,9 @@
 
 @section('content')
     <div class="mb-10">
-        <h1
-            class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-gray-900 to-gray-600 tracking-tight">
+        <h1 class="text-2xl sm:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-gray-900 to-gray-600 tracking-tight">
             Monitoring Barang Per User</h1>
-        <p class="text-gray-500 mt-2 text-lg">Pantau kondisi aset yang dipegang oleh setiap petugas.</p>
+        <p class="text-gray-500 mt-2 text-base sm:text-lg">Pantau kondisi aset yang dipegang oleh setiap petugas.</p>
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">

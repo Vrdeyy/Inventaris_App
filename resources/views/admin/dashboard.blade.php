@@ -1,12 +1,12 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="mb-10 flex flex-col md:flex-row md:items-center md:justify-between">
+    <div class="mb-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-            <h1 class="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-gray-900 to-gray-600 tracking-tight">Pusat Kendali Admin</h1>
-            <p class="text-gray-500 mt-2 text-lg">Gambaran umum performa sistem dan pemantauan aset sekolah.</p>
+            <h1 class="text-2xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-gray-900 to-gray-600 tracking-tight">Pusat Kendali Admin</h1>
+            <p class="text-gray-500 mt-2 text-base sm:text-lg">Gambaran umum performa sistem dan pemantauan aset sekolah.</p>
         </div>
-        <div class="mt-6 md:mt-0 flex items-center space-x-3 bg-white p-2 rounded-2xl shadow-sm border border-gray-100">
+        <div class="flex items-center space-x-3 bg-white p-2 rounded-2xl shadow-sm border border-gray-100 w-fit">
             <span class="inline-flex items-center px-4 py-2 rounded-xl text-sm font-bold bg-indigo-50 text-indigo-700">
                 <span class="w-2.5 h-2.5 rounded-full bg-indigo-500 mr-2 animate-pulse"></span>
                 Sistem Aktif
@@ -25,7 +25,7 @@
             <div class="absolute top-0 right-0 p-4 opacity-10">
                 <svg class="w-32 h-32 text-white transform rotate-12 group-hover:scale-110 transition-transform duration-500" fill="currentColor" viewBox="0 0 24 24"><path d="M20 7h-4V5c0-1.1-.9-2-2-2h-4c-1.1 0-2 .9-2 2v2H4c-1.1 0-2 .9-2 2v11c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V9c0-1.1-.9-2-2-2zM10 5h4v2h-4V5zm10 15H4V9h16v11z"/></svg>
             </div>
-            <div class="p-8 relative z-10">
+            <div class="p-6 sm:p-8 relative z-10">
                 <div class="flex items-center justify-between mb-4">
                     <div class="p-3 bg-white/20 backdrop-blur-sm rounded-2xl">
                         <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
@@ -33,7 +33,7 @@
                 </div>
                 <p class="text-indigo-100 text-sm font-bold uppercase tracking-wider mb-1">Total Barang</p>
                 <div class="flex items-baseline space-x-2">
-                    <h3 class="text-5xl font-black text-white tracking-tight">{{ number_format($stats['total_items']) }}</h3>
+                    <h3 class="text-3xl sm:text-5xl font-black text-white tracking-tight">{{ number_format($stats['total_items']) }}</h3>
                     <span class="text-indigo-200 font-medium">Unit</span>
                 </div>
             </div>
@@ -44,7 +44,7 @@
             <div class="absolute top-0 right-0 p-4 opacity-10">
                 <svg class="w-32 h-32 text-white transform rotate-12 group-hover:scale-110 transition-transform duration-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
             </div>
-            <div class="p-8 relative z-10">
+            <div class="p-6 sm:p-8 relative z-10">
                 <div class="flex items-center justify-between mb-4">
                     <div class="p-3 bg-white/20 backdrop-blur-sm rounded-2xl">
                         <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
@@ -52,7 +52,7 @@
                 </div>
                 <p class="text-purple-100 text-sm font-bold uppercase tracking-wider mb-1">Petugas Aktif</p>
                 <div class="flex items-baseline space-x-2">
-                    <h3 class="text-5xl font-black text-white tracking-tight">{{ number_format($stats['active_users']) }}</h3>
+                    <h3 class="text-3xl sm:text-5xl font-black text-white tracking-tight">{{ number_format($stats['active_users']) }}</h3>
                     <span class="text-purple-200 font-medium">Orang</span>
                 </div>
             </div>
@@ -63,7 +63,7 @@
             <div class="absolute top-0 right-0 p-4 opacity-10">
                 <svg class="w-32 h-32 text-white transform rotate-12 group-hover:scale-110 transition-transform duration-500" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zM7 7h10V5h2v14H5V5h2v2z"/></svg>
             </div>
-            <div class="p-8 relative z-10">
+            <div class="p-6 sm:p-8 relative z-10">
                 <div class="flex items-center justify-between mb-4">
                     <div class="p-3 bg-white/20 backdrop-blur-sm rounded-2xl">
                         <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
@@ -71,7 +71,7 @@
                 </div>
                 <p class="text-emerald-100 text-sm font-bold uppercase tracking-wider mb-1">Total Log</p>
                 <div class="flex items-baseline space-x-2">
-                    <h3 class="text-5xl font-black text-white tracking-tight">{{ number_format($stats['total_logs']) }}</h3>
+                    <h3 class="text-3xl sm:text-5xl font-black text-white tracking-tight">{{ number_format($stats['total_logs']) }}</h3>
                     <span class="text-emerald-200 font-medium">Aktivitas</span>
                 </div>
             </div>

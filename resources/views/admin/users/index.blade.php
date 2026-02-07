@@ -11,7 +11,7 @@
 
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
+            <table class="min-w-full divide-y divide-gray-200 table-responsive">
                 <thead class="bg-gray-50">
                     <tr>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama</th>
@@ -27,10 +27,10 @@
                 <tbody class="bg-white divide-y divide-gray-200">
                     @foreach($users as $user)
                         <tr class="hover:bg-indigo-50/50 transition-colors duration-200">
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ $user->name }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $user->email }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 uppercase">{{ $user->role }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap">
+                            <td data-label="Nama" class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ $user->name }}</td>
+                            <td data-label="Email" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $user->email }}</td>
+                            <td data-label="Role" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 uppercase">{{ $user->role }}</td>
+                            <td data-label="Status" class="px-6 py-4 whitespace-nowrap">
                                 @if($user->trashed())
                                     <span
                                         class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Deleted</span>
@@ -42,7 +42,7 @@
                                         class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">Inactive</span>
                                 @endif
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <td data-label="Aksi" class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 @if($user->id !== auth()->id())
                                     @if(!$user->trashed())
                                         <a href="{{ route('admin.users.edit', $user->id) }}"

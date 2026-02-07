@@ -1,14 +1,14 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="mb-10 flex flex-col md:flex-row md:items-center md:justify-between">
+    <div class="mb-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-            <h1 class="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-gray-900 to-gray-600 tracking-tight">Dashboard Petugas</h1>
-            <p class="text-gray-500 mt-2 text-lg">Selamat datang kembali, mari kelola inventaris dengan teliti.</p>
+            <h1 class="text-2xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-gray-900 to-gray-600 tracking-tight">Dashboard Petugas</h1>
+            <p class="text-gray-500 mt-2 text-base sm:text-lg">Selamat datang kembali, mari kelola inventaris dengan teliti.</p>
         </div>
-        <div class="mt-6 md:mt-0">
+        <div class="md:mt-0">
             <a href="{{ route('user.items.create') }}" 
-               class="inline-flex items-center px-6 py-4 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white rounded-2xl font-bold shadow-xl shadow-indigo-200 hover:shadow-2xl hover:shadow-indigo-300 hover:-translate-y-1 transition-all duration-300 group">
+               class="inline-flex items-center w-full sm:w-auto px-6 py-4 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white rounded-2xl font-bold shadow-xl shadow-indigo-200 hover:shadow-2xl hover:shadow-indigo-300 hover:-translate-y-1 transition-all duration-300 group justify-center">
                 <span class="mr-2 text-xl group-hover:rotate-90 transition-transform duration-300">➕</span> 
                 <span>Tambah Barang Baru</span>
             </a>
@@ -77,7 +77,7 @@
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <!-- Shortcut & Info -->
         <div class="lg:col-span-2 space-y-8">
-            <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 overflow-hidden relative group hover:shadow-lg transition-all duration-300">
+            <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 sm:p-8 overflow-hidden relative group hover:shadow-lg transition-all duration-300">
                 <div class="absolute -right-24 -top-24 w-80 h-80 bg-indigo-50 rounded-full opacity-50 blur-3xl group-hover:bg-indigo-100/50 transition-colors"></div>
                 <div class="relative">
                     <h3 class="text-xl font-extrabold text-gray-900 mb-8 flex items-center">
@@ -92,7 +92,7 @@
                             </div>
                             <div class="text-left">
                                 <span class="block text-base font-bold text-gray-800 mb-1 group-hover/card:text-indigo-700">Daftar Barang</span>
-                                <span class="text-xs text-gray-500 font-medium">Lihat dan update aset Anda</span>
+                                <span class="text-xs text-gray-500 font-medium whitespace-nowrap">Lihat dan update aset Anda</span>
                             </div>
                         </a>
                         <a href="{{ route('user.items.export') }}" 
@@ -102,7 +102,7 @@
                             </div>
                             <div class="text-left">
                                 <span class="block text-base font-bold text-gray-800 mb-1 group-hover/card:text-emerald-700">Cetak Laporan</span>
-                                <span class="text-xs text-gray-500 font-medium">Export Excel bulan berjalan</span>
+                                <span class="text-xs text-gray-500 font-medium whitespace-nowrap">Export Excel bulan berjalan</span>
                             </div>
                         </a>
                     </div>
