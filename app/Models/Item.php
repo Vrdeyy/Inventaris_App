@@ -22,6 +22,7 @@ class Item extends Model
         'condition',
         'description',
         'user_id',
+        'created_at',
     ];
 
     /**

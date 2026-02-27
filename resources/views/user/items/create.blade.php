@@ -27,9 +27,10 @@
                 </div>
                 <div class="text-xs font-bold text-gray-400 uppercase tracking-widest">Form Input Inventaris</div>
             </div>
-
-                <div class="p-6 sm:p-8">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                <form action="{{ route('user.items.store') }}" method="POST">
+                    @csrf
+                    <div class="p-6 sm:p-8">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
                         <!-- Nama -->
                         <div class="md:col-span-2 group">
                             <label
@@ -232,9 +233,9 @@
                             Simpan Barang
                         </button>
                     </div>
-                </div>
+                </form>
+            </div>
         </div>
-    </div>
 
     <script>
         function calculateTotal() {
