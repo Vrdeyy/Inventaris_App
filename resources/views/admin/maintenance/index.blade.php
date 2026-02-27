@@ -28,7 +28,7 @@
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Pilih Bulan</label>
-                                <select name="month" class="w-full rounded-lg border-gray-300 text-sm">
+                                <select name="month" id="select_month" class="w-full rounded-lg border-gray-300 text-sm">
                                     @foreach(range(1, 12) as $m)
                                         <option value="{{ $m }}" {{ $m == now()->month ? 'selected' : '' }}>
                                             {{ ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'][$m] }}
@@ -38,9 +38,9 @@
                             </div>
                             <div>
                                 <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Pilih Tahun</label>
-                                <select name="year" class="w-full rounded-lg border-gray-300 text-sm">
+                                <select name="year" id="select_year" class="w-full rounded-lg border-gray-300 text-sm">
                                     @foreach($logYears as $y)
-                                        <option value="{{ $y }}">{{ $y }}</option>
+                                        <option value="{{ $y }}" {{ $y == now()->year ? 'selected' : '' }}>{{ $y }}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -68,8 +68,7 @@
                                         <span class="block text-sm font-bold text-gray-800">Semua sebelum bulan
                                             terpilih</span>
                                         <span class="block text-[10px] text-gray-500">Hapus semua riwayat yang ada sebelum
-                                            tanggal 1
-                                            {{ ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'][now()->month] }}.</span>
+                                            tanggal 1 <span id="dynamic_date_text" class="font-bold text-amber-700">1 {{ ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'][now()->month] }} {{ now()->year }}</span>.</span>
                                     </div>
                                 </label>
                             </div>
@@ -167,6 +166,22 @@
     </div>
 
     <script>
+        // Update teks keterangan tanggal secara dinamis
+        const monthSelect = document.getElementById('select_month');
+        const yearSelect = document.getElementById('select_year');
+        const dateText = document.getElementById('dynamic_date_text');
+        
+        const monthNames = ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+
+        function updateDateText() {
+            const m = monthSelect.value;
+            const y = yearSelect.value;
+            dateText.innerText = `1 ${monthNames[m]} ${y}`;
+        }
+
+        monthSelect.addEventListener('change', updateDateText);
+        yearSelect.addEventListener('change', updateDateText);
+
         // Script untuk proteksi tombol Reset Data Barang
         const inputVerify = document.getElementById('security_verify');
         const btnReset = document.getElementById('btnResetItems');
